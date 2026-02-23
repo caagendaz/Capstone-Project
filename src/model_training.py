@@ -32,6 +32,8 @@ from sklearn.metrics import (
 from sklearn.preprocessing import StandardScaler
 import xgboost as xgb
 
+import matplotlib
+matplotlib.use('Agg')  # Use non-interactive backend
 import matplotlib.pyplot as plt
 import seaborn as sns
 

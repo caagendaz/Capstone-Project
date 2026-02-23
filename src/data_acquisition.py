@@ -194,7 +194,8 @@ class BVBRCDataDownloader:
     def get_amr_genes(self, genome_ids: List[str]) -> pd.DataFrame:
         """
         Retrieve antimicrobial resistance gene data for specific genomes.
-        Uses the genome_feature endpoint to get AMR-related genes.
+        Uses the sp_gene endpoint which has curated AMR gene annotations
+        from CARD (Comprehensive Antibiotic Resistance Database).
         
         Args:
             genome_ids: List of genome IDs to query
@@ -204,80 +205,92 @@ class BVBRCDataDownloader:
         """
         logger.info(f"Retrieving AMR gene data for {len(genome_ids)} genomes...")
         
-        # Try using genome_feature endpoint with AMR gene search
-        endpoint = f"{self.base_url}/genome_feature/"
-        
         all_amr_data = []
         
-        # AMR-related gene keywords to search for
-        amr_keywords = [
-            'acrB', 'gyrA', 'gyrB', 'parC', 'parE',  # Fluoroquinolone resistance
-            'blaTEM', 'blaCTX', 'blaSHV', 'blaKPC', 'blaNDM', 'blaOXA',  # Beta-lactamases
-            'aac', 'aph', 'ant',  # Aminoglycoside resistance
-            'sul1', 'sul2', 'dfrA',  # Sulfonamide/trimethoprim resistance
-            'tet', 'cat', 'floR', 'cmlA',  # Tetracycline/chloramphenicol
-            'qnr', 'oqx', 'acrA', 'tolC', 'marA', 'soxS', 'rob'  # Quinolone/efflux
-        ]
+        # Method 1: Query sp_gene endpoint for CARD AMR annotations
+        logger.info("Querying sp_gene endpoint for CARD AMR annotations...")
+        sp_gene_endpoint = f"{self.base_url}/sp_gene/"
         
-        # Process in batches
-        batch_size = 100
-        for i in range(0, min(len(genome_ids), 500), batch_size):
-            batch = genome_ids[i:i+batch_size]
+        # Get all CARD AMR annotations for E. coli (taxon_id 562)
+        # Then filter to only the genomes we're interested in
+        try:
+            headers = {
+                'Content-Type': 'application/rqlquery+x-www-form-urlencoded',
+                'Accept': 'application/json'
+            }
             
-            if i > 0:
-                logger.info(f"Processed {i}/{min(len(genome_ids), 500)} genomes")
-                time.sleep(0.5)
+            # Query CARD source for E. coli AMR genes
+            rql_query = "eq(taxon_id,562)&eq(source,CARD)&limit(25000)"
+            logger.info(f"Fetching CARD AMR data with query: {rql_query}")
             
-            for genome_id in batch:
-                try:
-                    # Use GET with query parameters
-                    headers = {
-                        'Accept': 'application/json'
-                    }
+            response = self.session.post(sp_gene_endpoint, data=rql_query, headers=headers, timeout=120)
+            
+            if response.status_code == 200:
+                data = response.json()
+                logger.info(f"Retrieved {len(data)} CARD AMR records")
+                
+                # Convert genome_ids to set for fast lookup
+                target_genomes = set(str(gid) for gid in genome_ids)
+                
+                for record in data:
+                    genome_id = str(record.get('genome_id', ''))
+                    if genome_id in target_genomes:
+                        all_amr_data.append({
+                            'genome_id': genome_id,
+                            'gene': record.get('gene', record.get('source_id', '')),
+                            'product': record.get('product', record.get('function', '')),
+                            'patric_id': record.get('patric_id', record.get('feature_id', '')),
+                            'source': record.get('source', 'CARD'),
+                            'evidence': record.get('evidence', ''),
+                            'classification': record.get('classification', [])
+                        })
+                
+                logger.info(f"Found {len(all_amr_data)} AMR annotations for target genomes")
+            else:
+                logger.warning(f"sp_gene query returned status {response.status_code}")
+                
+        except Exception as e:
+            logger.warning(f"sp_gene query failed: {e}")
+        
+        # Method 2: Also try NDARO source as backup
+        if len(all_amr_data) < 100:
+            logger.info("Trying NDARO source as additional data source...")
+            try:
+                rql_query = "eq(taxon_id,562)&eq(source,NDARO)&limit(25000)"
+                response = self.session.post(sp_gene_endpoint, data=rql_query, headers=headers, timeout=120)
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    target_genomes = set(str(gid) for gid in genome_ids)
                     
-                    # Search for features with AMR-related annotations
-                    params = {
-                        'eq(genome_id,' + genome_id + ')': '',
-                        'eq(feature_type,CDS)': '',
-                        'select(genome_id,patric_id,product,gene)': '',
-                        'limit(5000)': '',
-                        'http_accept': 'application/json'
-                    }
-                    
-                    response = self.session.get(endpoint, params=params, headers=headers)
-                    
-                    if response.status_code == 200:
-                        data = response.json()
-                        if data:
-                            # Filter for AMR-related genes
-                            for feature in data:
-                                product = str(feature.get('product', '')).lower()
-                                gene = str(feature.get('gene', '')).lower()
-                                
-                                # Check if feature is AMR-related
-                                is_amr = any(kw.lower() in product or kw.lower() in gene 
-                                           for kw in amr_keywords)
-                                
-                                if is_amr or 'resistance' in product or 'beta-lactamase' in product:
-                                    all_amr_data.append({
-                                        'genome_id': genome_id,
-                                        'gene': feature.get('gene', ''),
-                                        'product': feature.get('product', ''),
-                                        'patric_id': feature.get('patric_id', '')
-                                    })
-                                    
-                except Exception as e:
-                    # Silently continue on errors for individual genomes
-                    continue
+                    for record in data:
+                        genome_id = str(record.get('genome_id', ''))
+                        if genome_id in target_genomes:
+                            all_amr_data.append({
+                                'genome_id': genome_id,
+                                'gene': record.get('gene', record.get('source_id', '')),
+                                'product': record.get('product', record.get('function', '')),
+                                'patric_id': record.get('patric_id', ''),
+                                'source': record.get('source', 'NDARO'),
+                                'evidence': record.get('evidence', ''),
+                                'classification': record.get('classification', [])
+                            })
+                    logger.info(f"Added NDARO data, total: {len(all_amr_data)} records")
+            except Exception as e:
+                logger.debug(f"NDARO query failed: {e}")
         
         if all_amr_data:
             df = pd.DataFrame(all_amr_data)
-            logger.info(f"Retrieved {len(df)} AMR gene annotations")
+            # Remove duplicates
+            df = df.drop_duplicates(subset=['genome_id', 'gene'])
+            logger.info(f"Final: {len(df)} unique AMR gene annotations from {df['genome_id'].nunique()} genomes")
+            logger.info(f"Unique genes found: {df['gene'].nunique()}")
+            if 'source' in df.columns:
+                logger.info(f"Data sources: {df['source'].value_counts().to_dict()}")
             return df
         else:
-            logger.warning("No AMR gene data retrieved - will use phenotype data for modeling")
-            # Create empty DataFrame with expected columns
-            return pd.DataFrame(columns=['genome_id', 'gene', 'product', 'patric_id'])
+            logger.warning("No AMR gene data retrieved from any endpoint - will use phenotype data for modeling")
+            return pd.DataFrame(columns=['genome_id', 'gene', 'product', 'patric_id', 'source', 'evidence', 'classification'])
     
     def download_fasta(self, genome_id: str, output_file: Optional[str] = None) -> Path:
         """

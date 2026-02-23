@@ -194,25 +194,45 @@ class EcoliDataPreprocessor:
         Build binary feature matrix for AMR gene presence/absence.
         
         Args:
-            genomic_df: DataFrame with columns [isolate_id, gene_name, presence]
-            isolate_ids: List of isolate IDs to include
+            genomic_df: DataFrame with AMR gene data (columns: genome_id/isolate_id, gene/gene_name)
+            isolate_ids: List of isolate/genome IDs to include
             
         Returns:
             DataFrame with isolate_id as index and genes as columns (binary)
         """
         logger.info("Building AMR gene feature matrix...")
         
+        # Handle different column naming conventions
+        id_col = 'genome_id' if 'genome_id' in genomic_df.columns else 'isolate_id'
+        gene_col = 'gene' if 'gene' in genomic_df.columns else 'gene_name'
+        
+        # Convert IDs to strings for matching
+        genomic_df = genomic_df.copy()
+        genomic_df[id_col] = genomic_df[id_col].astype(str)
+        isolate_ids = [str(i) for i in isolate_ids]
+        
         # Filter to relevant isolates
-        genomic_df = genomic_df[genomic_df['isolate_id'].isin(isolate_ids)]
+        genomic_df = genomic_df[genomic_df[id_col].isin(isolate_ids)]
+        
+        if genomic_df.empty:
+            logger.warning("No matching isolates found in genomic data")
+            return pd.DataFrame()
+        
+        # Add presence column if not exists (presence = 1 for all records)
+        if 'presence' not in genomic_df.columns:
+            genomic_df['presence'] = 1
         
         # Pivot to create feature matrix
         feature_matrix = genomic_df.pivot_table(
-            index='isolate_id',
-            columns='gene_name',
+            index=id_col,
+            columns=gene_col,
             values='presence',
             fill_value=0,
             aggfunc='max'  # In case of duplicates, take max
         )
+        
+        # Rename index to standard name
+        feature_matrix.index.name = 'isolate_id'
         
         logger.info(f"Feature matrix shape: {feature_matrix.shape}")
         logger.info(f"Number of isolates: {len(feature_matrix)}")
@@ -228,23 +248,45 @@ class EcoliDataPreprocessor:
         
         Args:
             resistance_df: Cleaned resistance data
-            feature_matrix: AMR gene feature matrix
+            feature_matrix: AMR gene feature matrix (index is isolate/genome ID)
             
         Returns:
             Merged DataFrame ready for modeling
         """
         logger.info("Merging phenotype and genotype data...")
         
-        # Merge on isolate_id
+        # Determine which ID column to use for merging
+        if 'isolate_id' in resistance_df.columns:
+            merge_col = 'isolate_id'
+        elif 'genome_id' in resistance_df.columns:
+            merge_col = 'genome_id'
+        else:
+            logger.error("No ID column found in resistance data")
+            return resistance_df
+        
+        # Ensure feature matrix index is string type for matching
+        feature_matrix = feature_matrix.copy()
+        feature_matrix.index = feature_matrix.index.astype(str)
+        
+        # Convert merge column to string
+        resistance_df = resistance_df.copy()
+        resistance_df[merge_col] = resistance_df[merge_col].astype(str)
+        
+        # Merge on the ID column
         merged = resistance_df.merge(
             feature_matrix,
-            left_on='isolate_id',
+            left_on=merge_col,
             right_index=True,
             how='inner'
         )
         
         logger.info(f"Merged dataset shape: {merged.shape}")
         logger.info(f"Number of records: {len(merged)}")
+        
+        if len(merged) == 0:
+            logger.warning("No matches found during merge - check ID formats")
+            logger.info(f"Resistance IDs sample: {resistance_df[merge_col].head().tolist()}")
+            logger.info(f"Feature matrix IDs sample: {list(feature_matrix.index[:5])}")
         
         return merged
     
