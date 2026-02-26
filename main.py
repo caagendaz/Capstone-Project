@@ -131,6 +131,9 @@ def run_preprocessing():
 def run_exploratory_analysis(antibiotic: str = "CIPROFLOXACIN"):
     """
     Step 3: Exploratory data analysis.
+    
+    Uses AMR gene presence/absence features (not antibiotic resistance profiles)
+    for clustering and PCA analysis.
     """
     logger.info("\n" + "="*80)
     logger.info("STEP 3: EXPLORATORY ANALYSIS")
@@ -154,33 +157,82 @@ def run_exploratory_analysis(antibiotic: str = "CIPROFLOXACIN"):
     analyzer.plot_resistance_distribution(df)
     analyzer.plot_antibiotic_comparison(df)
     
-    # Antibiotic-specific analysis
-    logger.info(f"\nAnalyzing {antibiotic}...")
+    # Antibiotic-specific analysis using AMR GENE features
+    logger.info(f"\nAnalyzing {antibiotic} using AMR gene features...")
     
-    # Build resistance profile features
-    X, y = preprocessor.build_resistance_profile_features(df, antibiotic)
+    # Identify gene feature columns (exclude metadata columns)
+    metadata_cols = ['measurement', 'date_inserted', 'date_modified', 'laboratory_typing_method',
+                    'laboratory_typing_platform', 'laboratory_typing_method_version',
+                    'taxon_id', 'measurement_value', 'evidence', 'resistant_phenotype',
+                    'resistance_phenotype', 'public', 'vendor', 'id', 'measurement_sign',
+                    'antibiotic', 'testing_standard', 'testing_standard_year', 'owner',
+                    'pmid', 'genome_id', 'genome_name', '_version_', 'measurement_unit',
+                    'source', 'mic_value', 'isolate_id', 'binary_resistant']
     
-    if X is not None and not X.empty and y is not None:
-        # Align and clean
-        common_ids = X.index.intersection(y.dropna().index)
-        X = X.loc[common_ids].fillna(0)
-        y = y.loc[common_ids]
+    gene_cols = [c for c in df.columns if c not in metadata_cols]
+    
+    if len(gene_cols) > 5:
+        logger.info(f"Found {len(gene_cols)} AMR gene features")
+        logger.info(f"Sample genes: {gene_cols[:10]}")
+        
+        # Extract features and labels
+        X = df[gene_cols].fillna(0)
+        
+        # Get target label
+        if 'binary_resistant' in df.columns:
+            y = df['binary_resistant']
+        elif 'resistant_phenotype' in df.columns:
+            y = (df['resistant_phenotype'] == 'RESISTANT').astype(int)
+        elif 'resistance_phenotype' in df.columns:
+            y = (df['resistance_phenotype'] == 'R').astype(int)
+        else:
+            logger.warning("No resistance label found")
+            y = None
+        
+        logger.info(f"Feature matrix shape: {X.shape} (samples x genes)")
         
         if len(X) > 10:
-            # PCA
+            # PCA on gene features
             n_components = min(50, X.shape[1], X.shape[0] - 1)
             X_pca, pca = analyzer.perform_pca(X, n_components=n_components)
             analyzer.plot_pca_variance(pca)
-            analyzer.plot_pca_scatter(X_pca, y, f"PCA - {antibiotic}")
+            if y is not None:
+                analyzer.plot_pca_scatter(X_pca, y, f"PCA - {antibiotic} (AMR Genes)")
             
-            # Clustering
-            optimal_k = analyzer.find_optimal_clusters(X_pca, max_clusters=min(10, len(X)//10 + 1))
+            # Clustering - need enough samples for meaningful elbow plot
+            min_k = 6  # Minimum range for elbow: k=[2,3,4,5,6]
+            max_k = min(10, max(min_k, len(X)//10 + 1))
+            optimal_k = analyzer.find_optimal_clusters(X_pca, max_clusters=max_k)
             if optimal_k > 1:
                 cluster_labels = analyzer.perform_clustering(X_pca, n_clusters=optimal_k)
-                analyzer.plot_clusters(X_pca, cluster_labels, y)
-                analyzer.analyze_cluster_resistance(cluster_labels, y)
+                if y is not None:
+                    analyzer.plot_clusters(X_pca, cluster_labels, y)
+                    analyzer.analyze_cluster_resistance(cluster_labels, y)
+        else:
+            logger.warning(f"Only {len(X)} samples - need more data for PCA/clustering")
     else:
-        logger.warning(f"Not enough data for {antibiotic} analysis")
+        # Fallback to resistance profile features if no gene data
+        logger.info("No AMR gene features found, falling back to resistance profiles...")
+        X, y = preprocessor.build_resistance_profile_features(df, antibiotic)
+        
+        if X is not None and not X.empty and y is not None:
+            common_ids = X.index.intersection(y.dropna().index)
+            X = X.loc[common_ids].fillna(0)
+            y = y.loc[common_ids]
+            
+            if len(X) > 10:
+                n_components = min(50, X.shape[1], X.shape[0] - 1)
+                X_pca, pca = analyzer.perform_pca(X, n_components=n_components)
+                analyzer.plot_pca_variance(pca)
+                analyzer.plot_pca_scatter(X_pca, y, f"PCA - {antibiotic}")
+                
+                min_k = 6
+                max_k = min(10, max(min_k, len(X)//10 + 1))
+                optimal_k = analyzer.find_optimal_clusters(X_pca, max_clusters=max_k)
+                if optimal_k > 1:
+                    cluster_labels = analyzer.perform_clustering(X_pca, n_clusters=optimal_k)
+                    analyzer.plot_clusters(X_pca, cluster_labels, y)
+                    analyzer.analyze_cluster_resistance(cluster_labels, y)
     
     logger.info("Exploratory analysis complete!")
 

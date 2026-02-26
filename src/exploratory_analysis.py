@@ -269,9 +269,20 @@ class ExploratoryAnalyzer:
         """
         logger.info("Finding optimal number of clusters...")
         
+        # Need at least 3 samples per cluster and minimum k_range of [2,3,4,5,6]
+        n_samples = X_pca.shape[0]
+        min_clusters = 2
+        max_possible = max(min_clusters, min(max_clusters, n_samples // 3))
+        
+        # Ensure we have at least 5 points for a meaningful elbow plot
+        if max_possible < 6:
+            logger.warning(f"Too few samples ({n_samples}) for meaningful elbow plot. Need at least 18 samples.")
+            logger.info(f"Using default k=2 clusters")
+            return 2
+        
         inertias = []
         silhouette_scores = []
-        k_range = range(2, max_clusters + 1)
+        k_range = range(2, max_possible + 1)
         
         for k in k_range:
             kmeans = KMeans(n_clusters=k, random_state=42, n_init=10)
