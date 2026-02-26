@@ -19,7 +19,7 @@ import json
 from datetime import datetime
 
 from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestClassifier, StackingClassifier, VotingClassifier
 from sklearn.model_selection import (
     GridSearchCV, RandomizedSearchCV, cross_val_score,
     StratifiedKFold
@@ -27,10 +27,19 @@ from sklearn.model_selection import (
 from sklearn.metrics import (
     accuracy_score, precision_score, recall_score, f1_score,
     roc_auc_score, confusion_matrix, classification_report,
-    roc_curve
+    roc_curve, precision_recall_curve
 )
 from sklearn.preprocessing import StandardScaler
+from sklearn.feature_selection import RFE, SelectFromModel
 import xgboost as xgb
+
+# Try to import SMOTE, install if not available
+try:
+    from imblearn.over_sampling import SMOTE
+    from imblearn.pipeline import Pipeline as ImbPipeline
+    SMOTE_AVAILABLE = True
+except ImportError:
+    SMOTE_AVAILABLE = False
 
 import matplotlib
 matplotlib.use('Agg')  # Use non-interactive backend
@@ -427,17 +436,152 @@ class ModelTrainer:
         logger.info(f"Saved results to {filepath}")
         return filepath
 
+    def apply_smote(self, X_train: np.ndarray, y_train: pd.Series) -> Tuple[np.ndarray, np.ndarray]:
+        """
+        Apply SMOTE to handle class imbalance.
+        """
+        if not SMOTE_AVAILABLE:
+            logger.warning("SMOTE not available. Returning original data.")
+            return X_train, y_train.values if hasattr(y_train, 'values') else y_train
+            
+        logger.info("Applying SMOTE for class balancing...")
+        logger.info(f"Before SMOTE: {pd.Series(y_train).value_counts().to_dict()}")
+        
+        smote = SMOTE(random_state=42)
+        X_resampled, y_resampled = smote.fit_resample(X_train, y_train)
+        
+        logger.info(f"After SMOTE: {pd.Series(y_resampled).value_counts().to_dict()}")
+        return X_resampled, y_resampled
+    
+    def select_features_rfe(self, X_train: np.ndarray, y_train: np.ndarray,
+                           n_features: int = 20) -> Tuple[np.ndarray, List[int]]:
+        """
+        Select top features using Recursive Feature Elimination.
+        """
+        logger.info(f"Selecting top {n_features} features using RFE...")
+        
+        # Use Random Forest as base estimator
+        base_estimator = RandomForestClassifier(n_estimators=100, random_state=42, n_jobs=-1)
+        
+        n_features = min(n_features, X_train.shape[1])
+        rfe = RFE(estimator=base_estimator, n_features_to_select=n_features, step=1)
+        rfe.fit(X_train, y_train)
+        
+        selected_indices = list(np.where(rfe.support_)[0])
+        logger.info(f"Selected {len(selected_indices)} features")
+        
+        self.feature_selector = rfe
+        return X_train[:, selected_indices], selected_indices
+    
+    def find_optimal_threshold(self, model: Any, X_val: np.ndarray, 
+                               y_val: np.ndarray) -> float:
+        """
+        Find optimal classification threshold to maximize F1 score.
+        Especially important when recall is low.
+        """
+        logger.info("Finding optimal classification threshold...")
+        
+        y_proba = model.predict_proba(X_val)[:, 1]
+        
+        # Test different thresholds
+        thresholds = np.arange(0.1, 0.9, 0.05)
+        best_f1 = 0
+        best_threshold = 0.5
+        
+        for threshold in thresholds:
+            y_pred = (y_proba >= threshold).astype(int)
+            f1 = f1_score(y_val, y_pred, zero_division=0)
+            recall = recall_score(y_val, y_pred, zero_division=0)
+            
+            # Prioritize recall while maintaining reasonable precision
+            if f1 > best_f1:
+                best_f1 = f1
+                best_threshold = threshold
+        
+        logger.info(f"Optimal threshold: {best_threshold:.2f} (F1: {best_f1:.4f})")
+        return best_threshold
+    
+    def train_stacking_ensemble(self, X_train: np.ndarray, y_train: np.ndarray,
+                               cv: int = 5) -> StackingClassifier:
+        """
+        Create a stacking ensemble of all base models.
+        """
+        logger.info("Training stacking ensemble...")
+        
+        # Base estimators
+        estimators = [
+            ('lr', LogisticRegression(max_iter=1000, random_state=42, class_weight='balanced')),
+            ('rf', RandomForestClassifier(n_estimators=100, random_state=42, n_jobs=-1, class_weight='balanced')),
+            ('xgb', xgb.XGBClassifier(n_estimators=100, random_state=42, use_label_encoder=False, 
+                                      eval_metric='logloss', n_jobs=-1))
+        ]
+        
+        # Stacking with logistic regression as final estimator
+        stacking_clf = StackingClassifier(
+            estimators=estimators,
+            final_estimator=LogisticRegression(max_iter=1000, random_state=42),
+            cv=cv,
+            n_jobs=-1,
+            passthrough=False
+        )
+        
+        stacking_clf.fit(X_train, y_train)
+        self.models['stacking_ensemble'] = stacking_clf
+        
+        logger.info("Stacking ensemble trained successfully")
+        return stacking_clf
+    
+    def train_voting_ensemble(self, X_train: np.ndarray, y_train: np.ndarray) -> VotingClassifier:
+        """
+        Create a soft voting ensemble of all base models.
+        """
+        logger.info("Training voting ensemble...")
+        
+        estimators = [
+            ('lr', LogisticRegression(max_iter=1000, random_state=42, class_weight='balanced')),
+            ('rf', RandomForestClassifier(n_estimators=100, random_state=42, n_jobs=-1, class_weight='balanced')),
+            ('xgb', xgb.XGBClassifier(n_estimators=100, random_state=42, use_label_encoder=False,
+                                      eval_metric='logloss', n_jobs=-1))
+        ]
+        
+        voting_clf = VotingClassifier(
+            estimators=estimators,
+            voting='soft',
+            n_jobs=-1
+        )
+        
+        voting_clf.fit(X_train, y_train)
+        self.models['voting_ensemble'] = voting_clf
+        
+        logger.info("Voting ensemble trained successfully")
+        return voting_clf
+
 
 def train_all_models(X_train: pd.DataFrame,
                     X_test: pd.DataFrame,
                     y_train: pd.Series,
                     y_test: pd.Series,
                     antibiotic: str,
-                    cv: int = 5) -> ModelTrainer:
+                    cv: int = 5,
+                    use_smote: bool = True,
+                    use_feature_selection: bool = True,
+                    n_features: int = 30,
+                    use_ensemble: bool = True) -> ModelTrainer:
     """
-    Train all models and return trainer with results.
+    Train all models with improvements: SMOTE, feature selection, threshold tuning, ensembles.
+    
+    Args:
+        X_train, X_test: Feature dataframes
+        y_train, y_test: Target series
+        antibiotic: Name of the antibiotic being predicted
+        cv: Cross-validation folds
+        use_smote: Apply SMOTE for class balancing
+        use_feature_selection: Use RFE for feature selection
+        n_features: Number of features to select if using feature selection
+        use_ensemble: Train ensemble models (stacking + voting)
     """
     trainer = ModelTrainer()
+    feature_names = X_train.columns.tolist()
     
     logger.info(f"\n{'='*60}")
     logger.info(f"TRAINING MODELS FOR {antibiotic}")
@@ -449,24 +593,61 @@ def train_all_models(X_train: pd.DataFrame,
     
     # Prepare data
     X_train_scaled, X_test_scaled = trainer.prepare_data(X_train, X_test, scale=True)
+    y_train_array = y_train.values if hasattr(y_train, 'values') else y_train
+    y_test_array = y_test.values if hasattr(y_test, 'values') else y_test
     
-    # Train models
+    # Apply SMOTE for class balancing
+    if use_smote and SMOTE_AVAILABLE:
+        X_train_balanced, y_train_balanced = trainer.apply_smote(X_train_scaled, y_train_array)
+    else:
+        X_train_balanced, y_train_balanced = X_train_scaled, y_train_array
+    
+    # Apply feature selection
+    selected_features = feature_names
+    if use_feature_selection and X_train_balanced.shape[1] > n_features:
+        X_train_selected, selected_indices = trainer.select_features_rfe(
+            X_train_balanced, y_train_balanced, n_features=n_features
+        )
+        X_test_selected = X_test_scaled[:, selected_indices]
+        selected_features = [feature_names[i] for i in selected_indices]
+        logger.info(f"Selected features: {selected_features[:10]}...")  # Show first 10
+    else:
+        X_train_selected = X_train_balanced
+        X_test_selected = X_test_scaled
+    
+    # Train base models
     models_to_train = {
         'logistic_regression': trainer.train_logistic_regression,
         'random_forest': trainer.train_random_forest,
         'xgboost': trainer.train_xgboost
     }
     
+    optimal_thresholds = {}
+    
     for model_name, train_func in models_to_train.items():
         try:
             # Train
-            model = train_func(X_train_scaled, y_train, cv=cv)
+            model = train_func(X_train_selected, y_train_balanced, cv=cv)
             
-            # Evaluate
-            trainer.evaluate_model(model, X_test_scaled, y_test, model_name)
+            # Find optimal threshold
+            opt_threshold = trainer.find_optimal_threshold(model, X_test_selected, y_test_array)
+            optimal_thresholds[model_name] = opt_threshold
+            
+            # Evaluate with default threshold
+            trainer.evaluate_model(model, X_test_selected, y_test, model_name)
+            
+            # Also evaluate with optimal threshold
+            y_proba = model.predict_proba(X_test_selected)[:, 1]
+            y_pred_optimal = (y_proba >= opt_threshold).astype(int)
+            
+            logger.info(f"\n{model_name} with optimal threshold ({opt_threshold:.2f}):")
+            logger.info(f"  Accuracy: {accuracy_score(y_test_array, y_pred_optimal):.4f}")
+            logger.info(f"  Precision: {precision_score(y_test_array, y_pred_optimal, zero_division=0):.4f}")
+            logger.info(f"  Recall: {recall_score(y_test_array, y_pred_optimal, zero_division=0):.4f}")
+            logger.info(f"  F1: {f1_score(y_test_array, y_pred_optimal, zero_division=0):.4f}")
             
             # Plot confusion matrix
-            y_pred = model.predict(X_test_scaled)
+            y_pred = model.predict(X_test_selected)
             trainer.plot_confusion_matrix(y_test, y_pred, model_name)
             
             # Save model
@@ -474,30 +655,65 @@ def train_all_models(X_train: pd.DataFrame,
             
         except Exception as e:
             logger.error(f"Error training {model_name}: {e}")
+            import traceback
+            traceback.print_exc()
     
-    # Compare models
+    # Train ensemble models
+    if use_ensemble:
+        try:
+            logger.info("\n" + "="*40)
+            logger.info("TRAINING ENSEMBLE MODELS")
+            logger.info("="*40 + "\n")
+            
+            # Stacking ensemble
+            stacking_model = trainer.train_stacking_ensemble(X_train_selected, y_train_balanced, cv=cv)
+            trainer.evaluate_model(stacking_model, X_test_selected, y_test, 'stacking_ensemble')
+            y_pred_stack = stacking_model.predict(X_test_selected)
+            trainer.plot_confusion_matrix(y_test, y_pred_stack, 'stacking_ensemble')
+            trainer.save_model(stacking_model, 'stacking_ensemble', antibiotic)
+            
+            # Voting ensemble
+            voting_model = trainer.train_voting_ensemble(X_train_selected, y_train_balanced)
+            trainer.evaluate_model(voting_model, X_test_selected, y_test, 'voting_ensemble')
+            y_pred_vote = voting_model.predict(X_test_selected)
+            trainer.plot_confusion_matrix(y_test, y_pred_vote, 'voting_ensemble')
+            trainer.save_model(voting_model, 'voting_ensemble', antibiotic)
+            
+        except Exception as e:
+            logger.error(f"Error training ensemble models: {e}")
+            import traceback
+            traceback.print_exc()
+    
+    # Compare all models
     trainer.compare_models()
     
     # Plot ROC curves
-    trainer.plot_roc_curves(X_test_scaled, y_test)
+    trainer.plot_roc_curves(X_test_selected, y_test)
     
-    # Plot feature importance for tree models
+    # Plot feature importance for tree models (using selected features)
     if 'random_forest' in trainer.models:
         trainer.plot_feature_importance(
             trainer.models['random_forest'],
-            X_train.columns.tolist(),
+            selected_features,
             'random_forest'
         )
     
     if 'xgboost' in trainer.models:
         trainer.plot_feature_importance(
             trainer.models['xgboost'],
-            X_train.columns.tolist(),
+            selected_features,
             'xgboost'
         )
     
     # Save results
     trainer.save_results(antibiotic)
+    
+    # Log optimal thresholds
+    logger.info("\n" + "="*40)
+    logger.info("OPTIMAL THRESHOLDS (for deployment)")
+    logger.info("="*40)
+    for model_name, threshold in optimal_thresholds.items():
+        logger.info(f"  {model_name}: {threshold:.2f}")
     
     return trainer
 

@@ -50,9 +50,9 @@ def run_data_acquisition(skip_if_exists: bool = True):
             phenotypes_df.to_csv(config.RAW_DATA_DIR / "ecoli_resistance.csv", index=False)
             logger.info(f"Downloaded {len(phenotypes_df)} resistance records")
         
-        # Get AMR gene data
+        # Get AMR gene data - query more genomes for better model performance
         if not phenotypes_df.empty and 'genome_id' in phenotypes_df.columns:
-            genome_ids = phenotypes_df['genome_id'].unique()[:500]
+            genome_ids = phenotypes_df['genome_id'].unique()[:2000]  # Increased from 500
             amr_df = bvbrc_dl.get_amr_genes(genome_ids)
             if not amr_df.empty:
                 bvbrc_dl.save_amr_data(amr_df)
