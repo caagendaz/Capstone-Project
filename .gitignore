@@ -32,11 +32,20 @@ ENV/
 
 # Data files (large files should not be committed)
 data/raw/*.csv
+data/raw/*.tsv
+data/raw/*.pdf
 data/raw/*.fasta
 data/raw/*.gz
 data/processed/*.csv
 data/external/*.csv
 data/external/*.fasta
+data/external/ncbi_fastas*/
+data/external/ncbi_ciprofloxacin_remaining/
+data/external/amrfinder_batch_limit25/
+data/external/amrfinder_batch_cipro_remaining/
+data/external/amrfinder_batch_cipro_pilot25/hits/
+data/external/amrfinder_batch_cipro_pilot25/mutation_all/
+data/external/amrfinder_batch_cipro_pilot25/logs/
 
 # Model files (too large for git)
 models/*.pkl
@@ -72,3 +81,5 @@ logs/
 *.tmp
 *.bak
 *.cache
+tmp_fasta_test/
+tmp_mapping_test/

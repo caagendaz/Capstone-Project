@@ -1,0 +1,2 @@
+n_samples,n_features,n_positive_labels,n_negative_labels,n_amrfinder_hits,n_unique_symbols,n_quinolone_features
+25,91,13,12,308,91,10

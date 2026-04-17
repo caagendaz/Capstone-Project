@@ -65,6 +65,176 @@ class EcoliDataPreprocessor:
         df = pd.read_csv(filepath)
         logger.info(f"Loaded {len(df)} genomic records")
         return df
+
+    @staticmethod
+    def _normalize_testing_standard(values: pd.Series) -> pd.Series:
+        """
+        Normalize testing standard labels to canonical values.
+
+        Ambiguous or unsupported labels are set to missing so they can be
+        filtered out explicitly later.
+        """
+        normalized = values.astype("string").str.strip().str.upper()
+        normalized = normalized.replace({
+            "CLSI, EUCAST": pd.NA,
+            "EUCAST AND CLSI": pd.NA,
+            "SFM": pd.NA,
+            "NAN": pd.NA,
+            "NONE": pd.NA,
+            "": pd.NA
+        })
+        return normalized.where(normalized.isin(["CLSI", "EUCAST"]), pd.NA)
+
+    @staticmethod
+    def _feature_exclusion_columns() -> List[str]:
+        """Metadata columns that should never be treated as model features."""
+        return [
+            'measurement', 'date_inserted', 'date_modified',
+            'laboratory_typing_method', 'laboratory_typing_platform',
+            'laboratory_typing_method_version', 'taxon_id',
+            'measurement_value', 'evidence', 'resistant_phenotype',
+            'resistance_phenotype', 'public', 'vendor', 'id',
+            'measurement_sign', 'antibiotic', 'testing_standard',
+            'testing_standard_year', 'owner', 'pmid', 'genome_id',
+            'genome_name', '_version_', 'measurement_unit', 'source',
+            'mic_value', 'isolate_id', 'binary_resistant',
+            'binary_resistant_liberal', 'product', 'patric_id',
+            'classification', 'source_database', 'biosample_accession',
+            'ncbi_isolate_accession', 'bioproject_accession',
+            'collection_date', 'location', 'host', 'isolation_source',
+            'isolation_type', 'organism_group', 'disk_diffusion_mm'
+        ]
+
+    def deduplicate_resistance_measurements(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Collapse repeated phenotype measurements to one row per
+        isolate-antibiotic-testing standard combination.
+
+        Preference order:
+        1. Row has an MIC value
+        2. Row has a measurement sign
+        3. Broth dilution over agar dilution over disk diffusion
+        4. Newer testing standard year
+        5. More complete row overall
+
+        If the same semantic key has conflicting phenotype labels, the key is
+        dropped entirely to avoid label leakage and double counting.
+        """
+        id_col = 'isolate_id' if 'isolate_id' in df.columns else 'genome_id'
+        required_cols = [id_col, 'antibiotic', 'testing_standard', 'resistance_phenotype']
+
+        if any(col not in df.columns for col in required_cols):
+            logger.warning("Skipping semantic phenotype deduplication; required columns are missing")
+            return df
+
+        semantic_key = [id_col, 'antibiotic', 'testing_standard']
+        work = df.copy()
+
+        phenotype_counts = work.groupby(semantic_key)['resistance_phenotype'].nunique(dropna=True)
+        conflicting_keys = phenotype_counts[phenotype_counts > 1].index
+
+        if len(conflicting_keys) > 0:
+            conflict_index = pd.MultiIndex.from_tuples(conflicting_keys, names=semantic_key)
+            work_index = pd.MultiIndex.from_frame(work[semantic_key])
+            conflict_mask = work_index.isin(conflict_index)
+            logger.warning(
+                "Dropping %s rows across %s isolate-antibiotic-standard keys with conflicting phenotypes",
+                int(conflict_mask.sum()),
+                len(conflicting_keys)
+            )
+            work = work.loc[~conflict_mask].copy()
+
+        method_rank_map = {
+            'BROTH DILUTION': 3,
+            'AGAR DILUTION': 2,
+            'DISK DIFFUSION': 1
+        }
+        method_series = (
+            work['laboratory_typing_method'].astype("string").str.strip().str.upper()
+            if 'laboratory_typing_method' in work.columns
+            else pd.Series(pd.NA, index=work.index, dtype="string")
+        )
+
+        work['_has_mic'] = work['mic_value'].notna().astype(int) if 'mic_value' in work.columns else 0
+        work['_has_measurement_sign'] = (
+            work['measurement_sign'].notna().astype(int)
+            if 'measurement_sign' in work.columns else 0
+        )
+        work['_method_rank'] = method_series.map(method_rank_map).fillna(0).astype(int)
+        work['_standard_year'] = (
+            pd.to_numeric(work['testing_standard_year'], errors='coerce').fillna(-1)
+            if 'testing_standard_year' in work.columns else -1
+        )
+        work['_completeness'] = work.notna().sum(axis=1)
+
+        sort_cols = semantic_key + [
+            '_has_mic', '_has_measurement_sign', '_method_rank',
+            '_standard_year', '_completeness'
+        ]
+        ascending = [True] * len(semantic_key) + [False] * 5
+        work = work.sort_values(sort_cols, ascending=ascending, kind='mergesort')
+
+        initial_count = len(work)
+        work = work.drop_duplicates(subset=semantic_key, keep='first')
+        logger.info(
+            "Collapsed %s repeated phenotype rows using semantic key %s",
+            initial_count - len(work),
+            semantic_key
+        )
+
+        return work.drop(
+            columns=['_has_mic', '_has_measurement_sign', '_method_rank', '_standard_year', '_completeness']
+        )
+
+    def _split_by_groups(self,
+                         X: pd.DataFrame,
+                         y: pd.Series,
+                         groups: pd.Series,
+                         test_size: float,
+                         random_state: int) -> Tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
+        """
+        Split data by isolate/group rather than by row to prevent leakage.
+        """
+        group_series = pd.Series(groups, index=X.index, name='group').astype(str)
+        grouped_labels = pd.DataFrame({'group': group_series, 'target': y})
+        grouped_labels = grouped_labels.dropna(subset=['group', 'target'])
+
+        label_conflicts = grouped_labels.groupby('group')['target'].nunique(dropna=True)
+        conflicting_groups = label_conflicts[label_conflicts > 1].index
+        if len(conflicting_groups) > 0:
+            logger.warning(
+                "Dropping %s isolates with conflicting labels before train/test split",
+                len(conflicting_groups)
+            )
+            keep_mask = ~group_series.isin(conflicting_groups)
+            X = X.loc[keep_mask]
+            y = y.loc[keep_mask]
+            group_series = group_series.loc[keep_mask]
+            grouped_labels = pd.DataFrame({'group': group_series, 'target': y})
+
+        group_targets = grouped_labels.groupby('group')['target'].first()
+        stratify_labels = group_targets.values if group_targets.nunique() > 1 else None
+
+        try:
+            train_groups, test_groups = train_test_split(
+                group_targets.index.to_numpy(),
+                test_size=test_size,
+                random_state=random_state,
+                stratify=stratify_labels
+            )
+        except ValueError as exc:
+            logger.warning("Falling back to unstratified group split: %s", exc)
+            train_groups, test_groups = train_test_split(
+                group_targets.index.to_numpy(),
+                test_size=test_size,
+                random_state=random_state,
+                stratify=None
+            )
+
+        train_mask = group_series.isin(train_groups)
+        test_mask = group_series.isin(test_groups)
+
+        return X.loc[train_mask], X.loc[test_mask], y.loc[train_mask], y.loc[test_mask]
     
     def clean_resistance_data(self, df: pd.DataFrame) -> pd.DataFrame:
         """
@@ -97,7 +267,10 @@ class EcoliDataPreprocessor:
                 'INTERMEDIATE': 'I',
                 'RESISTANT': 'R',
                 'SUSCEPTIBLE-DOSE DEPENDENT': 'I',  # Treat SDD as intermediate
-                'NON-SUSCEPTIBLE': 'R'  # Treat non-susceptible as resistant
+                'NON-SUSCEPTIBLE': 'R',  # Treat non-susceptible as resistant
+                'S': 'S',
+                'I': 'I',
+                'R': 'R'
             }
             df['resistance_phenotype'] = df['resistant_phenotype'].map(phenotype_map)
             
@@ -129,7 +302,7 @@ class EcoliDataPreprocessor:
         
         # Standardize testing standards
         if 'testing_standard' in df.columns:
-            df['testing_standard'] = df['testing_standard'].str.upper()
+            df['testing_standard'] = self._normalize_testing_standard(df['testing_standard'])
             # Keep only valid standards
             valid_standards = df['testing_standard'].isin(['CLSI', 'EUCAST'])
             if valid_standards.sum() > 0:
@@ -139,6 +312,9 @@ class EcoliDataPreprocessor:
         # Create isolate_id from genome_id if needed
         if 'genome_id' in df.columns and 'isolate_id' not in df.columns:
             df['isolate_id'] = df['genome_id']
+
+        # Collapse repeated measurements to one phenotype row per semantic key
+        df = self.deduplicate_resistance_measurements(df)
         
         logger.info(f"Cleaned data: {len(df)} rows remaining")
         return df
@@ -318,8 +494,9 @@ class EcoliDataPreprocessor:
                             df: pd.DataFrame,
                             antibiotic: str,
                             test_size: float = 0.2,
-                            random_state: int = 42) -> Tuple[pd.DataFrame, pd.DataFrame, 
-                                                             pd.Series, pd.Series]:
+                            random_state: int = 42,
+                            include_testing_standard_feature: bool = False) -> Tuple[pd.DataFrame, pd.DataFrame, 
+                                                                                     pd.Series, pd.Series]:
         """
         Prepare data for modeling for a specific antibiotic.
         
@@ -339,26 +516,29 @@ class EcoliDataPreprocessor:
         logger.info(f"Records for {antibiotic}: {len(df_antibiotic)}")
         
         # Separate features and labels
-        # Assume gene columns start after metadata columns
-        metadata_cols = ['isolate_id', 'antibiotic', 'mic_value', 
-                        'resistance_phenotype', 'testing_standard',
-                        'binary_resistant', 'binary_resistant_liberal']
+        metadata_cols = self._feature_exclusion_columns()
         
         gene_cols = [col for col in df_antibiotic.columns 
                     if col not in metadata_cols]
         
-        X = df_antibiotic[gene_cols]
+        X = df_antibiotic[gene_cols].copy().fillna(0)
+        if include_testing_standard_feature and 'testing_standard' in df_antibiotic.columns:
+            X['testing_standard_is_eucast'] = (
+                df_antibiotic['testing_standard'].astype(str).str.upper() == 'EUCAST'
+            ).astype(int)
         y = df_antibiotic['binary_resistant']
         
         logger.info(f"Feature dimensions: {X.shape}")
         logger.info(f"Class distribution: {y.value_counts().to_dict()}")
         
-        # Train-test split with stratification
-        X_train, X_test, y_train, y_test = train_test_split(
-            X, y,
+        group_col = 'isolate_id' if 'isolate_id' in df_antibiotic.columns else 'genome_id'
+        groups = df_antibiotic[group_col] if group_col in df_antibiotic.columns else pd.Series(df_antibiotic.index, index=df_antibiotic.index)
+
+        # Group-aware split to prevent repeated isolates leaking across train/test
+        X_train, X_test, y_train, y_test = self._split_by_groups(
+            X, y, groups,
             test_size=test_size,
-            random_state=random_state,
-            stratify=y
+            random_state=random_state
         )
         
         logger.info(f"Training set: {len(X_train)} samples")
@@ -477,19 +657,76 @@ class EcoliDataPreprocessor:
             logger.error("Not enough samples for training")
             return None, None, None, None
         
-        # Train-test split with stratification
-        X_train, X_test, y_train, y_test = train_test_split(
-            X, y,
+        groups = pd.Series(X.index, index=X.index)
+        X_train, X_test, y_train, y_test = self._split_by_groups(
+            X, y, groups,
             test_size=test_size,
-            random_state=random_state,
-            stratify=y
+            random_state=random_state
         )
         
         logger.info(f"Training set: {len(X_train)} samples")
         logger.info(f"Test set: {len(X_test)} samples")
         
         return X_train, X_test, y_train, y_test
-        return output_path
+
+    def prepare_modeling_data_from_feature_matrix(self,
+                                                 df: pd.DataFrame,
+                                                 test_size: float = 0.2,
+                                                 random_state: int = 42,
+                                                 feature_prefix: str = "feat_",
+                                                 label_col: str = "resistance_phenotype",
+                                                 positive_label: str = "R",
+                                                 antibiotic: Optional[str] = None,
+                                                 sample_id_col: str = "Name") -> Tuple:
+        """
+        Prepare train/test data from a pre-built isolate-by-feature matrix.
+
+        This is used for the NCBI AMRFinderPlus workflow where the features
+        are already present as binary columns.
+        """
+        logger.info("Preparing modeling data from an existing feature matrix...")
+
+        work = df.copy()
+        if antibiotic and 'antibiotic' in work.columns:
+            work = work[work['antibiotic'].astype(str).str.upper() == antibiotic.upper()].copy()
+            logger.info(f"Rows for {antibiotic}: {len(work)}")
+
+        if label_col not in work.columns:
+            raise ValueError(f"Required label column '{label_col}' was not found.")
+
+        feature_cols = [col for col in work.columns if col.startswith(feature_prefix)]
+        if not feature_cols:
+            raise ValueError(f"No feature columns starting with '{feature_prefix}' were found.")
+
+        work = work.dropna(subset=[label_col]).copy()
+        work['binary_resistant'] = (work[label_col].astype(str).str.upper() == positive_label.upper()).astype(int)
+
+        if sample_id_col not in work.columns:
+            logger.warning(
+                "Sample ID column '%s' was not found; falling back to row index for grouping",
+                sample_id_col
+            )
+            groups = pd.Series(work.index.astype(str), index=work.index)
+        else:
+            groups = work[sample_id_col].astype(str)
+
+        X = work[feature_cols].copy().fillna(0).astype(int)
+        y = work['binary_resistant']
+
+        logger.info(f"Feature dimensions: {X.shape}")
+        logger.info(f"Class distribution: {y.value_counts().to_dict()}")
+
+        X_train, X_test, y_train, y_test = self._split_by_groups(
+            X,
+            y,
+            groups,
+            test_size=test_size,
+            random_state=random_state
+        )
+
+        logger.info(f"Training set: {len(X_train)} samples")
+        logger.info(f"Test set: {len(X_test)} samples")
+        return X_train, X_test, y_train, y_test
 
 
 def main():

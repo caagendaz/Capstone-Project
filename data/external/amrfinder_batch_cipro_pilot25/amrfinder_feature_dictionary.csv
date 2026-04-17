@@ -1,0 +1,92 @@
+feature_column,Element symbol,Element name,Type,Subtype,Class,Subclass,Scope
+feat_aac_6_Ib,aac(6')-Ib,AAC(6')-Ib family aminoglycoside 6'-N-acetyltransferase,AMR,AMR,AMINOGLYCOSIDE,AMIKACIN/KANAMYCIN/TOBRAMYCIN,core
+feat_aac_6_Ib3,aac(6')-Ib3,aminoglycoside N-acetyltransferase AAC(6')-Ib3,AMR,AMR,AMINOGLYCOSIDE,AMIKACIN/KANAMYCIN/TOBRAMYCIN,core
+feat_rmtC,rmtC,RmtC family 16S rRNA (guanine(1405)-N(7))-methyltransferase,AMR,AMR,AMINOGLYCOSIDE,AMINOGLYCOSIDE,core
+feat_aac_3_IId,aac(3)-IId,aminoglycoside N-acetyltransferase AAC(3)-IId,AMR,AMR,AMINOGLYCOSIDE,GENTAMICIN,core
+feat_aac_3_IIe,aac(3)-IIe,aminoglycoside N-acetyltransferase AAC(3)-IIe,AMR,AMR,AMINOGLYCOSIDE,GENTAMICIN,core
+feat_aac_3_IIg,aac(3)-IIg,aminoglycoside N-acetyltransferase AAC(3)-IIg,AMR,AMR,AMINOGLYCOSIDE,GENTAMICIN,core
+feat_aac_3_VIa,aac(3)-VIa,aminoglycoside N-acetyltransferase AAC(3)-VIa,AMR,AMR,AMINOGLYCOSIDE,GENTAMICIN,core
+feat_aac_6_Ib_2,aac(6')-Ib',aminoglycoside N-acetyltransferase AAC(6')-Ib',AMR,AMR,AMINOGLYCOSIDE,GENTAMICIN,core
+feat_aac_6_IIc,aac(6')-IIc,aminoglycoside N-acetyltransferase AAC(6')-IIc,AMR,AMR,AMINOGLYCOSIDE,GENTAMICIN/KANAMYCIN/TOBRAMYCIN,core
+feat_aph_3_Ia,aph(3')-Ia,aminoglycoside O-phosphotransferase APH(3')-Ia,AMR,AMR,AMINOGLYCOSIDE,KANAMYCIN,core
+feat_aadA1,aadA1,ANT(3'')-Ia family aminoglycoside nucleotidyltransferase AadA1,AMR,AMR,AMINOGLYCOSIDE,STREPTOMYCIN,core
+feat_aadA2,aadA2,ANT(3'')-Ia family aminoglycoside nucleotidyltransferase AadA2,AMR,AMR,AMINOGLYCOSIDE,STREPTOMYCIN,core
+feat_aadA5,aadA5,ANT(3'')-Ia family aminoglycoside nucleotidyltransferase AadA5,AMR,AMR,AMINOGLYCOSIDE,STREPTOMYCIN,core
+feat_aadA7,aadA7,ANT(3'')-Ia family aminoglycoside nucleotidyltransferase AadA7,AMR,AMR,AMINOGLYCOSIDE,STREPTOMYCIN,core
+feat_aph_3_Ib,aph(3'')-Ib,aminoglycoside O-phosphotransferase APH(3'')-Ib,AMR,AMR,AMINOGLYCOSIDE,STREPTOMYCIN,core
+feat_aph_6_Id,aph(6)-Id,aminoglycoside O-phosphotransferase APH(6)-Id,AMR,AMR,AMINOGLYCOSIDE,STREPTOMYCIN,core
+feat_aac_6_Ib_cr5,aac(6')-Ib-cr5,fluoroquinolone-acetylating aminoglycoside 6'-N-acetyltransferase AAC(6')-Ib-cr5,AMR,AMR,AMINOGLYCOSIDE/QUINOLONE,AMIKACIN/KANAMYCIN/QUINOLONE/TOBRAMYCIN,core
+feat_ftsI_N337NYRIN,ftsI_N337NYRIN,Escherichia aztreonam/cefiderocol/cephalosporin resistant FtsI,AMR,POINT,BETA-LACTAM,AZTREONAM/CEFIDEROCOL/CEPHALOSPORIN,core
+feat_blaCARB_2,blaCARB-2,PSE family carbenicillin-hydrolyzing class A beta-lactamase CARB-2,AMR,AMR,BETA-LACTAM,BETA-LACTAM,core
+feat_blaHER_3,blaHER-3,class A beta-lactamase HER-3,AMR,AMR,BETA-LACTAM,BETA-LACTAM,core
+feat_blaOXA_2,blaOXA-2,oxacillin-hydrolyzing class D beta-lactamase OXA-2,AMR,AMR,BETA-LACTAM,BETA-LACTAM,core
+feat_blaOXA_9,blaOXA-9,oxacillin-hydrolyzing class D beta-lactamase OXA-9,AMR,AMR,BETA-LACTAM,BETA-LACTAM,core
+feat_blaTEM,blaTEM,TEM family class A beta-lactamase,AMR,AMR,BETA-LACTAM,BETA-LACTAM,core
+feat_blaTEM_1,blaTEM-1,broad-spectrum class A beta-lactamase TEM-1,AMR,AMR,BETA-LACTAM,BETA-LACTAM,core
+feat_blaKPC_3,blaKPC-3,carbapenem-hydrolyzing class A beta-lactamase KPC-3,AMR,AMR,BETA-LACTAM,CARBAPENEM,core
+feat_blaKPC_4,blaKPC-4,carbapenem-hydrolyzing class A beta-lactamase KPC-4,AMR,AMR,BETA-LACTAM,CARBAPENEM,core
+feat_blaNDM_1,blaNDM-1,subclass B1 metallo-beta-lactamase NDM-1,AMR,AMR,BETA-LACTAM,CARBAPENEM,core
+feat_blaNDM_7,blaNDM-7,subclass B1 metallo-beta-lactamase NDM-7,AMR,AMR,BETA-LACTAM,CARBAPENEM,core
+feat_ompF_D34RfsTer1,ompF_D34RfsTer1,Escherichia carbapenem resistant OmpF,AMR,POINT_DISRUPT,BETA-LACTAM,CARBAPENEM,core
+feat_blaNDM_9,blaNDM-9,taniborbactam-resistant subclass B1 metallo-beta-lactamase NDM-9,AMR,AMR,BETA-LACTAM,CARBAPENEM/TANIBORBACTAM,core
+feat_cirA_P421TfsTer1,cirA_P421TfsTer1,Escherichia cefiderocol resistant CirA,AMR,POINT_DISRUPT,BETA-LACTAM,CEFIDEROCOL,core
+feat_cirA_Q247Ter,cirA_Q247Ter,Escherichia cefiderocol resistant CirA,AMR,POINT_DISRUPT,BETA-LACTAM,CEFIDEROCOL,core
+feat_cirA_S90YfsTer15,cirA_S90YfsTer15,Escherichia cefiderocol resistant CirA,AMR,POINT,BETA-LACTAM,CEFIDEROCOL,core
+feat_cirA_V239RfsTer47,cirA_V239RfsTer47,Escherichia cefiderocol resistant CirA,AMR,POINT_DISRUPT,BETA-LACTAM,CEFIDEROCOL,core
+feat_cirA_W587Ter,cirA_W587Ter,Escherichia cefiderocol resistant CirA,AMR,POINT_DISRUPT,BETA-LACTAM,CEFIDEROCOL,core
+feat_blaSHV_12,blaSHV-12,extended-spectrum class A beta-lactamase SHV-12,AMR,AMR,BETA-LACTAM,CEFIDEROCOL/CEPHALOSPORIN,core
+feat_ampC_C_42T,ampC_C-42T,Escherichia cephalosporin resistant ampC promoter,AMR,POINT,BETA-LACTAM,CEPHALOSPORIN,core
+feat_blaCMY_2,blaCMY-2,extended-spectrum class C beta-lactamase CMY-2,AMR,AMR,BETA-LACTAM,CEPHALOSPORIN,core
+feat_blaCMY_42,blaCMY-42,extended-spectrum class C beta-lactamase CMY-42,AMR,AMR,BETA-LACTAM,CEPHALOSPORIN,core
+feat_blaCMY_6,blaCMY-6,extended-spectrum class C beta-lactamase CMY-6,AMR,AMR,BETA-LACTAM,CEPHALOSPORIN,core
+feat_blaCTX_M_14,blaCTX-M-14,extended-spectrum class A beta-lactamase CTX-M-14,AMR,AMR,BETA-LACTAM,CEPHALOSPORIN,core
+feat_blaCTX_M_15,blaCTX-M-15,extended-spectrum class A beta-lactamase CTX-M-15,AMR,AMR,BETA-LACTAM,CEPHALOSPORIN,core
+feat_blaCTX_M_27,blaCTX-M-27,extended-spectrum class A beta-lactamase CTX-M-27,AMR,AMR,BETA-LACTAM,CEPHALOSPORIN,core
+feat_blaCTX_M_65,blaCTX-M-65,extended-spectrum class A beta-lactamase CTX-M-65,AMR,AMR,BETA-LACTAM,CEPHALOSPORIN,core
+feat_blaOXA_1,blaOXA-1,oxacillin-hydrolyzing class D beta-lactamase OXA-1,AMR,AMR,BETA-LACTAM,CEPHALOSPORIN,core
+feat_ble,ble,bleomycin binding protein Ble-MBL,AMR,AMR,BLEOMYCIN,BLEOMYCIN,core
+feat_bleO,bleO,bleomycin binding protein,AMR,AMR,BLEOMYCIN,BLEOMYCIN,core
+feat_mcr_1_1,mcr-1.1,phosphoethanolamine--lipid A transferase MCR-1.1,AMR,AMR,COLISTIN,COLISTIN,core
+feat_fosA3,fosA3,fosfomycin resistance glutathione transferase FosA3,AMR,AMR,FOSFOMYCIN,FOSFOMYCIN,core
+feat_ptsI_V25I,ptsI_V25I,Escherichia fosfomycin resistant PtsI,AMR,POINT,FOSFOMYCIN,FOSFOMYCIN,core
+feat_uhpT_E350Q,uhpT_E350Q,Escherichia fosfomycin resistant UhpT,AMR,POINT,FOSFOMYCIN,FOSFOMYCIN,core
+feat_cyaA_S352T,cyaA_S352T,Escherichia fosmidomycin resistant CyaA,AMR,POINT,FOSMIDOMYCIN,FOSMIDOMYCIN,core
+feat_lnu_F,lnu(F),lincosamide nucleotidyltransferase Lnu(F),AMR,AMR,LINCOSAMIDE,LINCOSAMIDE,core
+feat_erm_B,erm(B),23S rRNA (adenine(2058)-N(6))-methyltransferase Erm(B),AMR,AMR,LINCOSAMIDE/MACROLIDE/STREPTOGRAMIN,CLINDAMYCIN/ERYTHROMYCIN/STREPTOGRAMIN B,core
+feat_mph_A,mph(A),Mph(A) family macrolide 2'-phosphotransferase,AMR,AMR,MACROLIDE,AZITHROMYCIN/ERYTHROMYCIN/SPIRAMYCIN/TELITHROMYCIN,core
+feat_mrx_A,mrx(A),phosphorylated macrolide efflux MFS transporter Mrx(A),AMR,AMR,MACROLIDE,AZITHROMYCIN/ERYTHROMYCIN/SPIRAMYCIN/TELITHROMYCIN,core
+feat_ere_A,ere(A),EreA family erythromycin esterase,AMR,AMR,MACROLIDE,ERYTHROMYCIN,core
+feat_estX_3,estX-3,macrolide esterase EstX-3,AMR,AMR,MACROLIDE,TYLOSIN,core
+feat_estX_sat2,estX/sat2,bifunctional putative esterase EstX/streptothricin N-acetyltransferase Sat1,AMR,AMR,MACROLIDE/STREPTOTHRICIN,STREPTOTHRICIN/TYLOSIN,core
+feat_acrR_T5N,acrR_T5N,Escherichia ampicillin/chloramphenicol/fluoroquinolone/rifampin/tetracycline resistant AcrR,AMR,POINT,MULTIDRUG,AMPICILLIN/CHLORAMPHENICOL/FLUOROQUINOLONE/RIFAMPIN/TETRACYCLINE,core
+feat_acrR_V29YfsTer44,acrR_V29YfsTer44,Escherichia ampicillin/chloramphenicol/fluoroquinolone/rifampin/tetracycline resistant AcrR,AMR,POINT_DISRUPT,MULTIDRUG,AMPICILLIN/CHLORAMPHENICOL/FLUOROQUINOLONE/RIFAMPIN/TETRACYCLINE,core
+feat_nfsA_G126R,nfsA_G126R,Escherichia nitrofurantoin resistant NfsA,AMR,POINT,NITROFURAN,NITROFURANTOIN,core
+feat_nfsA_Q195Ter,nfsA_Q195Ter,Escherichia nitrofurantoin resistant NfsA,AMR,POINT_DISRUPT,NITROFURAN,NITROFURANTOIN,core
+feat_nfsA_R203C,nfsA_R203C,Escherichia nitrofurantoin resistant NfsA,AMR,POINT,NITROFURAN,NITROFURANTOIN,core
+feat_nfsB_F167LfsTer11,nfsB_F167LfsTer11,Escherichia nitrofurantoin resistant NfsB,AMR,POINT_DISRUPT,NITROFURAN,NITROFURANTOIN,core
+feat_catA1,catA1,type A-1 chloramphenicol O-acetyltransferase,AMR,AMR,PHENICOL,CHLORAMPHENICOL,core
+feat_catA3,catA3,type A-3 chloramphenicol O-acetyltransferase CatIII,AMR,AMR,PHENICOL,CHLORAMPHENICOL,core
+feat_catB3,catB3,type B-3 chloramphenicol O-acetyltransferase CatB3,AMR,AMR,PHENICOL,CHLORAMPHENICOL,core
+feat_cmlA1,cmlA1,chloramphenicol efflux MFS transporter CmlA1,AMR,AMR,PHENICOL,CHLORAMPHENICOL,core
+feat_floR,floR,chloramphenicol/florfenicol efflux MFS transporter FloR,AMR,AMR,PHENICOL,CHLORAMPHENICOL/FLORFENICOL,core
+feat_gyrA_D87N,gyrA_D87N,Escherichia quinolone resistant GyrA,AMR,POINT,QUINOLONE,QUINOLONE,core
+feat_gyrA_S83L,gyrA_S83L,Escherichia quinolone resistant GyrA,AMR,POINT,QUINOLONE,QUINOLONE,core
+feat_parC_E84V,parC_E84V,Escherichia quinolone resistant ParC,AMR,POINT,QUINOLONE,QUINOLONE,core
+feat_parC_S80I,parC_S80I,Escherichia quinolone resistant ParC,AMR,POINT,QUINOLONE,QUINOLONE,core
+feat_parE_E460D,parE_E460D,Escherichia quinolone resistant ParE,AMR,POINT,QUINOLONE,QUINOLONE,core
+feat_parE_I529L,parE_I529L,Escherichia quinolone resistant ParE,AMR,POINT,QUINOLONE,QUINOLONE,core
+feat_parE_S458A,parE_S458A,Escherichia quinolone resistant ParE,AMR,POINT,QUINOLONE,QUINOLONE,core
+feat_qnrA1,qnrA1,quinolone resistance pentapeptide repeat protein QnrA1,AMR,AMR,QUINOLONE,QUINOLONE,core
+feat_qnrS1,qnrS1,quinolone resistance pentapeptide repeat protein QnrS1,AMR,AMR,QUINOLONE,QUINOLONE,core
+feat_arr,arr,NAD(+)--rifampin ADP-ribosyltransferase,AMR,AMR,RIFAMYCIN,RIFAMYCIN,core
+feat_sul1,sul1,sulfonamide-resistant dihydropteroate synthase Sul1,AMR,AMR,SULFONAMIDE,SULFONAMIDE,core
+feat_sul2,sul2,sulfonamide-resistant dihydropteroate synthase Sul2,AMR,AMR,SULFONAMIDE,SULFONAMIDE,core
+feat_sul3,sul3,sulfonamide-resistant dihydropteroate synthase Sul3,AMR,AMR,SULFONAMIDE,SULFONAMIDE,core
+feat_tet_A,tet(A),tetracycline efflux MFS transporter Tet(A),AMR,AMR,TETRACYCLINE,TETRACYCLINE,core
+feat_tet_B,tet(B),tetracycline efflux MFS transporter Tet(B),AMR,AMR,TETRACYCLINE,TETRACYCLINE,core
+feat_tet_M,tet(M),tetracycline resistance ribosomal protection protein Tet(M),AMR,AMR,TETRACYCLINE,TETRACYCLINE,core
+feat_dfrA12,dfrA12,trimethoprim-resistant dihydrofolate reductase DfrA12,AMR,AMR,TRIMETHOPRIM,TRIMETHOPRIM,core
+feat_dfrA14,dfrA14,trimethoprim-resistant dihydrofolate reductase DfrA14,AMR,AMR,TRIMETHOPRIM,TRIMETHOPRIM,core
+feat_dfrA17,dfrA17,trimethoprim-resistant dihydrofolate reductase DfrA17,AMR,AMR,TRIMETHOPRIM,TRIMETHOPRIM,core
+feat_dfrA29,dfrA29,trimethoprim-resistant dihydrofolate reductase DfrA29,AMR,AMR,TRIMETHOPRIM,TRIMETHOPRIM,core
+feat_dfrA8,dfrA8,trimethoprim-resistant dihydrofolate reductase DfrA8,AMR,AMR,TRIMETHOPRIM,TRIMETHOPRIM,core

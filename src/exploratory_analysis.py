@@ -31,13 +31,21 @@ logger = logging.getLogger(__name__)
 sns.set_style("whitegrid")
 plt.rcParams['figure.figsize'] = (12, 8)
 
+PALETTE = {
+    'blue': '#2A6F97',
+    'orange': '#F4A261',
+    'purple': '#7B6DCC',
+    'slate': '#5C677D',
+    'teal': '#2A9D8F'
+}
+
 
 class ExploratoryAnalyzer:
     """
     Performs exploratory data analysis on E. coli resistance data.
     """
     
-    def __init__(self, output_dir: str = "results/figures"):
+    def __init__(self, output_dir: str = "results/figures/results"):
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
         self.scaler = StandardScaler()
@@ -107,7 +115,7 @@ class ExploratoryAnalyzer:
         if 'resistance_phenotype' in df_plot.columns:
             phenotype_counts = df_plot['resistance_phenotype'].value_counts()
             axes[0].bar(phenotype_counts.index, phenotype_counts.values, 
-                       color=['green', 'orange', 'red'])
+                       color=[PALETTE['blue'], PALETTE['orange'], PALETTE['purple']])
             axes[0].set_xlabel('Phenotype')
             axes[0].set_ylabel('Count')
             axes[0].set_title('Resistance Phenotypes (S/I/R)')
@@ -116,7 +124,7 @@ class ExploratoryAnalyzer:
         # Binary resistance
         if 'binary_resistant' in df_plot.columns:
             binary_counts = df_plot['binary_resistant'].value_counts()
-            colors = ['green', 'red']
+            colors = [PALETTE['blue'], PALETTE['orange']]
             axes[1].bar(['Susceptible', 'Resistant'], 
                        [binary_counts.get(0, 0), binary_counts.get(1, 0)],
                        color=colors)
@@ -151,7 +159,7 @@ class ExploratoryAnalyzer:
         bars = ax.barh(resistance_rates.index, resistance_rates['resistance_rate'] * 100)
         
         # Color bars by resistance rate
-        colors = plt.cm.RdYlGn_r(resistance_rates['resistance_rate'])
+        colors = plt.cm.cividis(resistance_rates['resistance_rate'])
         for bar, color in zip(bars, colors):
             bar.set_color(color)
         
@@ -223,9 +231,9 @@ class ExploratoryAnalyzer:
         
         # Cumulative variance
         cumsum_var = np.cumsum(pca.explained_variance_ratio_)
-        axes[1].plot(range(1, len(cumsum_var) + 1), cumsum_var, 'b-', linewidth=2)
-        axes[1].axhline(y=0.95, color='r', linestyle='--', label='95% variance')
-        axes[1].axhline(y=0.90, color='orange', linestyle='--', label='90% variance')
+        axes[1].plot(range(1, len(cumsum_var) + 1), cumsum_var, color=PALETTE['blue'], linewidth=2)
+        axes[1].axhline(y=0.95, color=PALETTE['purple'], linestyle='--', label='95% variance')
+        axes[1].axhline(y=0.90, color=PALETTE['orange'], linestyle='--', label='90% variance')
         axes[1].set_xlabel('Number of Components')
         axes[1].set_ylabel('Cumulative Explained Variance')
         axes[1].set_title('Cumulative Variance Explained')
@@ -246,7 +254,7 @@ class ExploratoryAnalyzer:
         fig, ax = plt.subplots(figsize=(10, 8))
         
         scatter = ax.scatter(X_pca[:, 0], X_pca[:, 1], 
-                           c=y, cmap='RdYlGn_r',
+                           c=y, cmap='cividis',
                            alpha=0.6, s=50)
         
         ax.set_xlabel(f'PC1 ({self.pca.explained_variance_ratio_[0]:.2%} variance)')
@@ -295,21 +303,21 @@ class ExploratoryAnalyzer:
         fig, axes = plt.subplots(1, 2, figsize=(14, 5))
         
         # Elbow plot
-        axes[0].plot(k_range, inertias, 'bo-', linewidth=2)
+        axes[0].plot(k_range, inertias, color=PALETTE['blue'], marker='o', linewidth=2)
         axes[0].set_xlabel('Number of Clusters (k)')
         axes[0].set_ylabel('Inertia (Within-cluster sum of squares)')
         axes[0].set_title('Elbow Method')
         axes[0].grid(alpha=0.3)
         
         # Silhouette score
-        axes[1].plot(k_range, silhouette_scores, 'ro-', linewidth=2)
+        axes[1].plot(k_range, silhouette_scores, color=PALETTE['orange'], marker='o', linewidth=2)
         axes[1].set_xlabel('Number of Clusters (k)')
         axes[1].set_ylabel('Silhouette Score')
         axes[1].set_title('Silhouette Score by k')
         axes[1].grid(alpha=0.3)
         
         optimal_k = k_range[np.argmax(silhouette_scores)]
-        axes[1].axvline(x=optimal_k, color='green', linestyle='--', 
+        axes[1].axvline(x=optimal_k, color=PALETTE['purple'], linestyle='--', 
                        label=f'Optimal k={optimal_k}')
         axes[1].legend()
         
@@ -356,11 +364,11 @@ class ExploratoryAnalyzer:
         
         # Plot 1: Colored by cluster
         scatter1 = axes[0].scatter(X_pca[:, 0], X_pca[:, 1],
-                                  c=cluster_labels, cmap='viridis',
+                                  c=cluster_labels, cmap='cividis',
                                   alpha=0.6, s=50)
         axes[0].scatter(self.kmeans.cluster_centers_[:, 0],
                        self.kmeans.cluster_centers_[:, 1],
-                       c='red', marker='X', s=200, edgecolors='black',
+                       c=PALETTE['orange'], marker='X', s=200, edgecolors='black',
                        label='Centroids')
         axes[0].set_xlabel('PC1')
         axes[0].set_ylabel('PC2')
@@ -371,7 +379,7 @@ class ExploratoryAnalyzer:
         # Plot 2: Colored by resistance if available
         if y is not None:
             scatter2 = axes[1].scatter(X_pca[:, 0], X_pca[:, 1],
-                                      c=y, cmap='RdYlGn_r',
+                                      c=y, cmap='cividis',
                                       alpha=0.6, s=50)
             axes[1].set_xlabel('PC1')
             axes[1].set_ylabel('PC2')
@@ -409,7 +417,7 @@ class ExploratoryAnalyzer:
         bars = ax.bar(cluster_stats.index, cluster_stats['resistance_rate'] * 100)
         
         # Color bars
-        colors = plt.cm.RdYlGn_r(cluster_stats['resistance_rate'])
+        colors = plt.cm.cividis(cluster_stats['resistance_rate'])
         for bar, color in zip(bars, colors):
             bar.set_color(color)
         

@@ -1,0 +1,2 @@
+antibiotic,feature_source,testing_standard,n_train,n_test,n_total,model,accuracy,precision,recall,f1_score,roc_auc
+CIPROFLOXACIN,genes,EUCAST,207,52,259,logistic_regression,0.7307692307692307,0.5555555555555556,0.3333333333333333,0.4166666666666667,0.7153153153153153

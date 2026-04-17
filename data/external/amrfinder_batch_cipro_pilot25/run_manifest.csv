@@ -1,0 +1,251 @@
+biosample_accession,assembly_accession,fasta_path,hits_path,mutation_all_path,log_path,status,returncode,stdout,stderr
+SAMN10221255,GCA_003769125.2,data\external\ncbi_fastas_cipro_pilot25\SAMN10221255__GCA_003769125.2.fna,data\external\amrfinder_batch_cipro_pilot25\hits\SAMN10221255.tsv,data\external\amrfinder_batch_cipro_pilot25\mutation_all\SAMN10221255.tsv,data\external\amrfinder_batch_cipro_pilot25\logs\SAMN10221255.log,completed,0,,"Running: amrfinder --nucleotide /mnt/c/Users/cagns/Downloads/capstone_project/data/external/ncbi_fastas_cipro_pilot25/SAMN10221255__GCA_003769125.2.fna --organism Escherichia --name SAMN10221255 --output /mnt/c/Users/cagns/Downloads/capstone_project/data/external/amrfinder_batch_cipro_pilot25/hits/SAMN10221255.tsv --log /mnt/c/Users/cagns/Downloads/capstone_project/data/external/amrfinder_batch_cipro_pilot25/logs/SAMN10221255.log --mutation_all /mnt/c/Users/cagns/Downloads/capstone_project/data/external/amrfinder_batch_cipro_pilot25/mutation_all/SAMN10221255.tsv
+Software directory: /home/cagns/miniconda3/envs/amrfinder-bioconda/bin/
+Software version: 4.2.7
+Database directory: /home/cagns/miniconda3/envs/amrfinder-bioconda/share/amrfinderplus/data/2026-03-24.1
+Database version: 2026-03-24.1
+AMRFinder translated nucleotide and mutation search
+Running tblastn
+Running blastn
+Making report
+amrfinder took 88 seconds to complete"
+SAMN10221115,GCA_004281435.2,data\external\ncbi_fastas_cipro_pilot25\SAMN10221115__GCA_004281435.2.fna,data\external\amrfinder_batch_cipro_pilot25\hits\SAMN10221115.tsv,data\external\amrfinder_batch_cipro_pilot25\mutation_all\SAMN10221115.tsv,data\external\amrfinder_batch_cipro_pilot25\logs\SAMN10221115.log,completed,0,,"Running: amrfinder --nucleotide /mnt/c/Users/cagns/Downloads/capstone_project/data/external/ncbi_fastas_cipro_pilot25/SAMN10221115__GCA_004281435.2.fna --organism Escherichia --name SAMN10221115 --output /mnt/c/Users/cagns/Downloads/capstone_project/data/external/amrfinder_batch_cipro_pilot25/hits/SAMN10221115.tsv --log /mnt/c/Users/cagns/Downloads/capstone_project/data/external/amrfinder_batch_cipro_pilot25/logs/SAMN10221115.log --mutation_all /mnt/c/Users/cagns/Downloads/capstone_project/data/external/amrfinder_batch_cipro_pilot25/mutation_all/SAMN10221115.tsv
+Software directory: /home/cagns/miniconda3/envs/amrfinder-bioconda/bin/
+Software version: 4.2.7
+Database directory: /home/cagns/miniconda3/envs/amrfinder-bioconda/share/amrfinderplus/data/2026-03-24.1
+Database version: 2026-03-24.1
+AMRFinder translated nucleotide and mutation search
+Running tblastn
+Running blastn
+Making report
+amrfinder took 72 seconds to complete"
+SAMN10221061,GCA_008386375.1,data\external\ncbi_fastas_cipro_pilot25\SAMN10221061__GCA_008386375.1.fna,data\external\amrfinder_batch_cipro_pilot25\hits\SAMN10221061.tsv,data\external\amrfinder_batch_cipro_pilot25\mutation_all\SAMN10221061.tsv,data\external\amrfinder_batch_cipro_pilot25\logs\SAMN10221061.log,completed,0,,"Running: amrfinder --nucleotide /mnt/c/Users/cagns/Downloads/capstone_project/data/external/ncbi_fastas_cipro_pilot25/SAMN10221061__GCA_008386375.1.fna --organism Escherichia --name SAMN10221061 --output /mnt/c/Users/cagns/Downloads/capstone_project/data/external/amrfinder_batch_cipro_pilot25/hits/SAMN10221061.tsv --log /mnt/c/Users/cagns/Downloads/capstone_project/data/external/amrfinder_batch_cipro_pilot25/logs/SAMN10221061.log --mutation_all /mnt/c/Users/cagns/Downloads/capstone_project/data/external/amrfinder_batch_cipro_pilot25/mutation_all/SAMN10221061.tsv
+Software directory: /home/cagns/miniconda3/envs/amrfinder-bioconda/bin/
+Software version: 4.2.7
+Database directory: /home/cagns/miniconda3/envs/amrfinder-bioconda/share/amrfinderplus/data/2026-03-24.1
+Database version: 2026-03-24.1
+AMRFinder translated nucleotide and mutation search
+Running tblastn
+Running blastn
+Making report
+amrfinder took 74 seconds to complete"
+SAMN10221523,GCA_008386435.1,data\external\ncbi_fastas_cipro_pilot25\SAMN10221523__GCA_008386435.1.fna,data\external\amrfinder_batch_cipro_pilot25\hits\SAMN10221523.tsv,data\external\amrfinder_batch_cipro_pilot25\mutation_all\SAMN10221523.tsv,data\external\amrfinder_batch_cipro_pilot25\logs\SAMN10221523.log,completed,0,,"Running: amrfinder --nucleotide /mnt/c/Users/cagns/Downloads/capstone_project/data/external/ncbi_fastas_cipro_pilot25/SAMN10221523__GCA_008386435.1.fna --organism Escherichia --name SAMN10221523 --output /mnt/c/Users/cagns/Downloads/capstone_project/data/external/amrfinder_batch_cipro_pilot25/hits/SAMN10221523.tsv --log /mnt/c/Users/cagns/Downloads/capstone_project/data/external/amrfinder_batch_cipro_pilot25/logs/SAMN10221523.log --mutation_all /mnt/c/Users/cagns/Downloads/capstone_project/data/external/amrfinder_batch_cipro_pilot25/mutation_all/SAMN10221523.tsv
+Software directory: /home/cagns/miniconda3/envs/amrfinder-bioconda/bin/
+Software version: 4.2.7
+Database directory: /home/cagns/miniconda3/envs/amrfinder-bioconda/share/amrfinderplus/data/2026-03-24.1
+Database version: 2026-03-24.1
+AMRFinder translated nucleotide and mutation search
+Running tblastn
+Running blastn
+Making report
+amrfinder took 74 seconds to complete"
+SAMN49441676,GCA_051175635.1,data\external\ncbi_fastas_cipro_pilot25\SAMN49441676__GCA_051175635.1.fna,data\external\amrfinder_batch_cipro_pilot25\hits\SAMN49441676.tsv,data\external\amrfinder_batch_cipro_pilot25\mutation_all\SAMN49441676.tsv,data\external\amrfinder_batch_cipro_pilot25\logs\SAMN49441676.log,completed,0,,"Running: amrfinder --nucleotide /mnt/c/Users/cagns/Downloads/capstone_project/data/external/ncbi_fastas_cipro_pilot25/SAMN49441676__GCA_051175635.1.fna --organism Escherichia --name SAMN49441676 --output /mnt/c/Users/cagns/Downloads/capstone_project/data/external/amrfinder_batch_cipro_pilot25/hits/SAMN49441676.tsv --log /mnt/c/Users/cagns/Downloads/capstone_project/data/external/amrfinder_batch_cipro_pilot25/logs/SAMN49441676.log --mutation_all /mnt/c/Users/cagns/Downloads/capstone_project/data/external/amrfinder_batch_cipro_pilot25/mutation_all/SAMN49441676.tsv
+Software directory: /home/cagns/miniconda3/envs/amrfinder-bioconda/bin/
+Software version: 4.2.7
+Database directory: /home/cagns/miniconda3/envs/amrfinder-bioconda/share/amrfinderplus/data/2026-03-24.1
+Database version: 2026-03-24.1
+AMRFinder translated nucleotide and mutation search
+Running tblastn
+Running blastn
+Making report
+amrfinder took 75 seconds to complete"
+SAMN49441675,GCA_051200755.1,data\external\ncbi_fastas_cipro_pilot25\SAMN49441675__GCA_051200755.1.fna,data\external\amrfinder_batch_cipro_pilot25\hits\SAMN49441675.tsv,data\external\amrfinder_batch_cipro_pilot25\mutation_all\SAMN49441675.tsv,data\external\amrfinder_batch_cipro_pilot25\logs\SAMN49441675.log,completed,0,,"Running: amrfinder --nucleotide /mnt/c/Users/cagns/Downloads/capstone_project/data/external/ncbi_fastas_cipro_pilot25/SAMN49441675__GCA_051200755.1.fna --organism Escherichia --name SAMN49441675 --output /mnt/c/Users/cagns/Downloads/capstone_project/data/external/amrfinder_batch_cipro_pilot25/hits/SAMN49441675.tsv --log /mnt/c/Users/cagns/Downloads/capstone_project/data/external/amrfinder_batch_cipro_pilot25/logs/SAMN49441675.log --mutation_all /mnt/c/Users/cagns/Downloads/capstone_project/data/external/amrfinder_batch_cipro_pilot25/mutation_all/SAMN49441675.tsv
+Software directory: /home/cagns/miniconda3/envs/amrfinder-bioconda/bin/
+Software version: 4.2.7
+Database directory: /home/cagns/miniconda3/envs/amrfinder-bioconda/share/amrfinderplus/data/2026-03-24.1
+Database version: 2026-03-24.1
+AMRFinder translated nucleotide and mutation search
+Running tblastn
+Running blastn
+Making report
+amrfinder took 77 seconds to complete"
+SAMN04014959,GCF_002055635.1,data\external\ncbi_fastas_cipro_pilot25\SAMN04014959__GCF_002055635.1.fna,data\external\amrfinder_batch_cipro_pilot25\hits\SAMN04014959.tsv,data\external\amrfinder_batch_cipro_pilot25\mutation_all\SAMN04014959.tsv,data\external\amrfinder_batch_cipro_pilot25\logs\SAMN04014959.log,completed,0,,"Running: amrfinder --nucleotide /mnt/c/Users/cagns/Downloads/capstone_project/data/external/ncbi_fastas_cipro_pilot25/SAMN04014959__GCF_002055635.1.fna --organism Escherichia --name SAMN04014959 --output /mnt/c/Users/cagns/Downloads/capstone_project/data/external/amrfinder_batch_cipro_pilot25/hits/SAMN04014959.tsv --log /mnt/c/Users/cagns/Downloads/capstone_project/data/external/amrfinder_batch_cipro_pilot25/logs/SAMN04014959.log --mutation_all /mnt/c/Users/cagns/Downloads/capstone_project/data/external/amrfinder_batch_cipro_pilot25/mutation_all/SAMN04014959.tsv
+Software directory: /home/cagns/miniconda3/envs/amrfinder-bioconda/bin/
+Software version: 4.2.7
+Database directory: /home/cagns/miniconda3/envs/amrfinder-bioconda/share/amrfinderplus/data/2026-03-24.1
+Database version: 2026-03-24.1
+AMRFinder translated nucleotide and mutation search
+Running tblastn
+Running blastn
+Making report
+amrfinder took 125 seconds to complete"
+SAMN04014945,GCF_002056635.1,data\external\ncbi_fastas_cipro_pilot25\SAMN04014945__GCF_002056635.1.fna,data\external\amrfinder_batch_cipro_pilot25\hits\SAMN04014945.tsv,data\external\amrfinder_batch_cipro_pilot25\mutation_all\SAMN04014945.tsv,data\external\amrfinder_batch_cipro_pilot25\logs\SAMN04014945.log,completed,0,,"Running: amrfinder --nucleotide /mnt/c/Users/cagns/Downloads/capstone_project/data/external/ncbi_fastas_cipro_pilot25/SAMN04014945__GCF_002056635.1.fna --organism Escherichia --name SAMN04014945 --output /mnt/c/Users/cagns/Downloads/capstone_project/data/external/amrfinder_batch_cipro_pilot25/hits/SAMN04014945.tsv --log /mnt/c/Users/cagns/Downloads/capstone_project/data/external/amrfinder_batch_cipro_pilot25/logs/SAMN04014945.log --mutation_all /mnt/c/Users/cagns/Downloads/capstone_project/data/external/amrfinder_batch_cipro_pilot25/mutation_all/SAMN04014945.tsv
+Software directory: /home/cagns/miniconda3/envs/amrfinder-bioconda/bin/
+Software version: 4.2.7
+Database directory: /home/cagns/miniconda3/envs/amrfinder-bioconda/share/amrfinderplus/data/2026-03-24.1
+Database version: 2026-03-24.1
+AMRFinder translated nucleotide and mutation search
+Running tblastn
+Running blastn
+Making report
+amrfinder took 85 seconds to complete"
+SAMN06828737,GCF_002142695.1,data\external\ncbi_fastas_cipro_pilot25\SAMN06828737__GCF_002142695.1.fna,data\external\amrfinder_batch_cipro_pilot25\hits\SAMN06828737.tsv,data\external\amrfinder_batch_cipro_pilot25\mutation_all\SAMN06828737.tsv,data\external\amrfinder_batch_cipro_pilot25\logs\SAMN06828737.log,completed,0,,"Running: amrfinder --nucleotide /mnt/c/Users/cagns/Downloads/capstone_project/data/external/ncbi_fastas_cipro_pilot25/SAMN06828737__GCF_002142695.1.fna --organism Escherichia --name SAMN06828737 --output /mnt/c/Users/cagns/Downloads/capstone_project/data/external/amrfinder_batch_cipro_pilot25/hits/SAMN06828737.tsv --log /mnt/c/Users/cagns/Downloads/capstone_project/data/external/amrfinder_batch_cipro_pilot25/logs/SAMN06828737.log --mutation_all /mnt/c/Users/cagns/Downloads/capstone_project/data/external/amrfinder_batch_cipro_pilot25/mutation_all/SAMN06828737.tsv
+Software directory: /home/cagns/miniconda3/envs/amrfinder-bioconda/bin/
+Software version: 4.2.7
+Database directory: /home/cagns/miniconda3/envs/amrfinder-bioconda/share/amrfinderplus/data/2026-03-24.1
+Database version: 2026-03-24.1
+AMRFinder translated nucleotide and mutation search
+Running tblastn
+Running blastn
+Making report
+amrfinder took 86 seconds to complete"
+SAMN06808253,GCF_002157245.1,data\external\ncbi_fastas_cipro_pilot25\SAMN06808253__GCF_002157245.1.fna,data\external\amrfinder_batch_cipro_pilot25\hits\SAMN06808253.tsv,data\external\amrfinder_batch_cipro_pilot25\mutation_all\SAMN06808253.tsv,data\external\amrfinder_batch_cipro_pilot25\logs\SAMN06808253.log,completed,0,,"Running: amrfinder --nucleotide /mnt/c/Users/cagns/Downloads/capstone_project/data/external/ncbi_fastas_cipro_pilot25/SAMN06808253__GCF_002157245.1.fna --organism Escherichia --name SAMN06808253 --output /mnt/c/Users/cagns/Downloads/capstone_project/data/external/amrfinder_batch_cipro_pilot25/hits/SAMN06808253.tsv --log /mnt/c/Users/cagns/Downloads/capstone_project/data/external/amrfinder_batch_cipro_pilot25/logs/SAMN06808253.log --mutation_all /mnt/c/Users/cagns/Downloads/capstone_project/data/external/amrfinder_batch_cipro_pilot25/mutation_all/SAMN06808253.tsv
+Software directory: /home/cagns/miniconda3/envs/amrfinder-bioconda/bin/
+Software version: 4.2.7
+Database directory: /home/cagns/miniconda3/envs/amrfinder-bioconda/share/amrfinderplus/data/2026-03-24.1
+Database version: 2026-03-24.1
+AMRFinder translated nucleotide and mutation search
+Running tblastn
+Running blastn
+Making report
+amrfinder took 91 seconds to complete"
+SAMN04014990,GCF_002180055.1,data\external\ncbi_fastas_cipro_pilot25\SAMN04014990__GCF_002180055.1.fna,data\external\amrfinder_batch_cipro_pilot25\hits\SAMN04014990.tsv,data\external\amrfinder_batch_cipro_pilot25\mutation_all\SAMN04014990.tsv,data\external\amrfinder_batch_cipro_pilot25\logs\SAMN04014990.log,completed,0,,"Running: amrfinder --nucleotide /mnt/c/Users/cagns/Downloads/capstone_project/data/external/ncbi_fastas_cipro_pilot25/SAMN04014990__GCF_002180055.1.fna --organism Escherichia --name SAMN04014990 --output /mnt/c/Users/cagns/Downloads/capstone_project/data/external/amrfinder_batch_cipro_pilot25/hits/SAMN04014990.tsv --log /mnt/c/Users/cagns/Downloads/capstone_project/data/external/amrfinder_batch_cipro_pilot25/logs/SAMN04014990.log --mutation_all /mnt/c/Users/cagns/Downloads/capstone_project/data/external/amrfinder_batch_cipro_pilot25/mutation_all/SAMN04014990.tsv
+Software directory: /home/cagns/miniconda3/envs/amrfinder-bioconda/bin/
+Software version: 4.2.7
+Database directory: /home/cagns/miniconda3/envs/amrfinder-bioconda/share/amrfinderplus/data/2026-03-24.1
+Database version: 2026-03-24.1
+AMRFinder translated nucleotide and mutation search
+Running tblastn
+Running blastn
+Making report
+amrfinder took 78 seconds to complete"
+SAMN04014960,GCF_002180095.1,data\external\ncbi_fastas_cipro_pilot25\SAMN04014960__GCF_002180095.1.fna,data\external\amrfinder_batch_cipro_pilot25\hits\SAMN04014960.tsv,data\external\amrfinder_batch_cipro_pilot25\mutation_all\SAMN04014960.tsv,data\external\amrfinder_batch_cipro_pilot25\logs\SAMN04014960.log,completed,0,,"Running: amrfinder --nucleotide /mnt/c/Users/cagns/Downloads/capstone_project/data/external/ncbi_fastas_cipro_pilot25/SAMN04014960__GCF_002180095.1.fna --organism Escherichia --name SAMN04014960 --output /mnt/c/Users/cagns/Downloads/capstone_project/data/external/amrfinder_batch_cipro_pilot25/hits/SAMN04014960.tsv --log /mnt/c/Users/cagns/Downloads/capstone_project/data/external/amrfinder_batch_cipro_pilot25/logs/SAMN04014960.log --mutation_all /mnt/c/Users/cagns/Downloads/capstone_project/data/external/amrfinder_batch_cipro_pilot25/mutation_all/SAMN04014960.tsv
+Software directory: /home/cagns/miniconda3/envs/amrfinder-bioconda/bin/
+Software version: 4.2.7
+Database directory: /home/cagns/miniconda3/envs/amrfinder-bioconda/share/amrfinderplus/data/2026-03-24.1
+Database version: 2026-03-24.1
+AMRFinder translated nucleotide and mutation search
+Running tblastn
+Running blastn
+Making report
+amrfinder took 152 seconds to complete"
+SAMN04015003,GCF_002180135.1,data\external\ncbi_fastas_cipro_pilot25\SAMN04015003__GCF_002180135.1.fna,data\external\amrfinder_batch_cipro_pilot25\hits\SAMN04015003.tsv,data\external\amrfinder_batch_cipro_pilot25\mutation_all\SAMN04015003.tsv,data\external\amrfinder_batch_cipro_pilot25\logs\SAMN04015003.log,completed,0,,"Running: amrfinder --nucleotide /mnt/c/Users/cagns/Downloads/capstone_project/data/external/ncbi_fastas_cipro_pilot25/SAMN04015003__GCF_002180135.1.fna --organism Escherichia --name SAMN04015003 --output /mnt/c/Users/cagns/Downloads/capstone_project/data/external/amrfinder_batch_cipro_pilot25/hits/SAMN04015003.tsv --log /mnt/c/Users/cagns/Downloads/capstone_project/data/external/amrfinder_batch_cipro_pilot25/logs/SAMN04015003.log --mutation_all /mnt/c/Users/cagns/Downloads/capstone_project/data/external/amrfinder_batch_cipro_pilot25/mutation_all/SAMN04015003.tsv
+Software directory: /home/cagns/miniconda3/envs/amrfinder-bioconda/bin/
+Software version: 4.2.7
+Database directory: /home/cagns/miniconda3/envs/amrfinder-bioconda/share/amrfinderplus/data/2026-03-24.1
+Database version: 2026-03-24.1
+AMRFinder translated nucleotide and mutation search
+Running tblastn
+Running blastn
+Making report
+amrfinder took 93 seconds to complete"
+SAMN12359680,GCA_012935215.1,data\external\ncbi_fastas_cipro_pilot25\SAMN12359680__GCA_012935215.1.fna,data\external\amrfinder_batch_cipro_pilot25\hits\SAMN12359680.tsv,data\external\amrfinder_batch_cipro_pilot25\mutation_all\SAMN12359680.tsv,data\external\amrfinder_batch_cipro_pilot25\logs\SAMN12359680.log,completed,0,,"Running: amrfinder --nucleotide /mnt/c/Users/cagns/Downloads/capstone_project/data/external/ncbi_fastas_cipro_pilot25/SAMN12359680__GCA_012935215.1.fna --organism Escherichia --name SAMN12359680 --output /mnt/c/Users/cagns/Downloads/capstone_project/data/external/amrfinder_batch_cipro_pilot25/hits/SAMN12359680.tsv --log /mnt/c/Users/cagns/Downloads/capstone_project/data/external/amrfinder_batch_cipro_pilot25/logs/SAMN12359680.log --mutation_all /mnt/c/Users/cagns/Downloads/capstone_project/data/external/amrfinder_batch_cipro_pilot25/mutation_all/SAMN12359680.tsv
+Software directory: /home/cagns/miniconda3/envs/amrfinder-bioconda/bin/
+Software version: 4.2.7
+Database directory: /home/cagns/miniconda3/envs/amrfinder-bioconda/share/amrfinderplus/data/2026-03-24.1
+Database version: 2026-03-24.1
+AMRFinder translated nucleotide and mutation search
+Running tblastn
+Running blastn
+Making report
+amrfinder took 97 seconds to complete"
+SAMN16304201,GCA_016237425.1,data\external\ncbi_fastas_cipro_pilot25\SAMN16304201__GCA_016237425.1.fna,data\external\amrfinder_batch_cipro_pilot25\hits\SAMN16304201.tsv,data\external\amrfinder_batch_cipro_pilot25\mutation_all\SAMN16304201.tsv,data\external\amrfinder_batch_cipro_pilot25\logs\SAMN16304201.log,completed,0,,"Running: amrfinder --nucleotide /mnt/c/Users/cagns/Downloads/capstone_project/data/external/ncbi_fastas_cipro_pilot25/SAMN16304201__GCA_016237425.1.fna --organism Escherichia --name SAMN16304201 --output /mnt/c/Users/cagns/Downloads/capstone_project/data/external/amrfinder_batch_cipro_pilot25/hits/SAMN16304201.tsv --log /mnt/c/Users/cagns/Downloads/capstone_project/data/external/amrfinder_batch_cipro_pilot25/logs/SAMN16304201.log --mutation_all /mnt/c/Users/cagns/Downloads/capstone_project/data/external/amrfinder_batch_cipro_pilot25/mutation_all/SAMN16304201.tsv
+Software directory: /home/cagns/miniconda3/envs/amrfinder-bioconda/bin/
+Software version: 4.2.7
+Database directory: /home/cagns/miniconda3/envs/amrfinder-bioconda/share/amrfinderplus/data/2026-03-24.1
+Database version: 2026-03-24.1
+AMRFinder translated nucleotide and mutation search
+Running tblastn
+Running blastn
+Making report
+amrfinder took 85 seconds to complete"
+SAMN04014902,GCF_002056065.1,data\external\ncbi_fastas_cipro_pilot25\SAMN04014902__GCF_002056065.1.fna,data\external\amrfinder_batch_cipro_pilot25\hits\SAMN04014902.tsv,data\external\amrfinder_batch_cipro_pilot25\mutation_all\SAMN04014902.tsv,data\external\amrfinder_batch_cipro_pilot25\logs\SAMN04014902.log,completed,0,,"Running: amrfinder --nucleotide /mnt/c/Users/cagns/Downloads/capstone_project/data/external/ncbi_fastas_cipro_pilot25/SAMN04014902__GCF_002056065.1.fna --organism Escherichia --name SAMN04014902 --output /mnt/c/Users/cagns/Downloads/capstone_project/data/external/amrfinder_batch_cipro_pilot25/hits/SAMN04014902.tsv --log /mnt/c/Users/cagns/Downloads/capstone_project/data/external/amrfinder_batch_cipro_pilot25/logs/SAMN04014902.log --mutation_all /mnt/c/Users/cagns/Downloads/capstone_project/data/external/amrfinder_batch_cipro_pilot25/mutation_all/SAMN04014902.tsv
+Software directory: /home/cagns/miniconda3/envs/amrfinder-bioconda/bin/
+Software version: 4.2.7
+Database directory: /home/cagns/miniconda3/envs/amrfinder-bioconda/share/amrfinderplus/data/2026-03-24.1
+Database version: 2026-03-24.1
+AMRFinder translated nucleotide and mutation search
+Running tblastn
+Running blastn
+Making report
+amrfinder took 82 seconds to complete"
+SAMN04014910,GCF_002056145.1,data\external\ncbi_fastas_cipro_pilot25\SAMN04014910__GCF_002056145.1.fna,data\external\amrfinder_batch_cipro_pilot25\hits\SAMN04014910.tsv,data\external\amrfinder_batch_cipro_pilot25\mutation_all\SAMN04014910.tsv,data\external\amrfinder_batch_cipro_pilot25\logs\SAMN04014910.log,completed,0,,"Running: amrfinder --nucleotide /mnt/c/Users/cagns/Downloads/capstone_project/data/external/ncbi_fastas_cipro_pilot25/SAMN04014910__GCF_002056145.1.fna --organism Escherichia --name SAMN04014910 --output /mnt/c/Users/cagns/Downloads/capstone_project/data/external/amrfinder_batch_cipro_pilot25/hits/SAMN04014910.tsv --log /mnt/c/Users/cagns/Downloads/capstone_project/data/external/amrfinder_batch_cipro_pilot25/logs/SAMN04014910.log --mutation_all /mnt/c/Users/cagns/Downloads/capstone_project/data/external/amrfinder_batch_cipro_pilot25/mutation_all/SAMN04014910.tsv
+Software directory: /home/cagns/miniconda3/envs/amrfinder-bioconda/bin/
+Software version: 4.2.7
+Database directory: /home/cagns/miniconda3/envs/amrfinder-bioconda/share/amrfinderplus/data/2026-03-24.1
+Database version: 2026-03-24.1
+AMRFinder translated nucleotide and mutation search
+Running tblastn
+Running blastn
+Making report
+amrfinder took 101 seconds to complete"
+SAMN04014858,GCF_002796585.1,data\external\ncbi_fastas_cipro_pilot25\SAMN04014858__GCF_002796585.1.fna,data\external\amrfinder_batch_cipro_pilot25\hits\SAMN04014858.tsv,data\external\amrfinder_batch_cipro_pilot25\mutation_all\SAMN04014858.tsv,data\external\amrfinder_batch_cipro_pilot25\logs\SAMN04014858.log,completed,0,,"Running: amrfinder --nucleotide /mnt/c/Users/cagns/Downloads/capstone_project/data/external/ncbi_fastas_cipro_pilot25/SAMN04014858__GCF_002796585.1.fna --organism Escherichia --name SAMN04014858 --output /mnt/c/Users/cagns/Downloads/capstone_project/data/external/amrfinder_batch_cipro_pilot25/hits/SAMN04014858.tsv --log /mnt/c/Users/cagns/Downloads/capstone_project/data/external/amrfinder_batch_cipro_pilot25/logs/SAMN04014858.log --mutation_all /mnt/c/Users/cagns/Downloads/capstone_project/data/external/amrfinder_batch_cipro_pilot25/mutation_all/SAMN04014858.tsv
+Software directory: /home/cagns/miniconda3/envs/amrfinder-bioconda/bin/
+Software version: 4.2.7
+Database directory: /home/cagns/miniconda3/envs/amrfinder-bioconda/share/amrfinderplus/data/2026-03-24.1
+Database version: 2026-03-24.1
+AMRFinder translated nucleotide and mutation search
+Running tblastn
+Running blastn
+Making report
+amrfinder took 99 seconds to complete"
+SAMN04014918,GCF_002948655.1,data\external\ncbi_fastas_cipro_pilot25\SAMN04014918__GCF_002948655.1.fna,data\external\amrfinder_batch_cipro_pilot25\hits\SAMN04014918.tsv,data\external\amrfinder_batch_cipro_pilot25\mutation_all\SAMN04014918.tsv,data\external\amrfinder_batch_cipro_pilot25\logs\SAMN04014918.log,completed,0,,"Running: amrfinder --nucleotide /mnt/c/Users/cagns/Downloads/capstone_project/data/external/ncbi_fastas_cipro_pilot25/SAMN04014918__GCF_002948655.1.fna --organism Escherichia --name SAMN04014918 --output /mnt/c/Users/cagns/Downloads/capstone_project/data/external/amrfinder_batch_cipro_pilot25/hits/SAMN04014918.tsv --log /mnt/c/Users/cagns/Downloads/capstone_project/data/external/amrfinder_batch_cipro_pilot25/logs/SAMN04014918.log --mutation_all /mnt/c/Users/cagns/Downloads/capstone_project/data/external/amrfinder_batch_cipro_pilot25/mutation_all/SAMN04014918.tsv
+Software directory: /home/cagns/miniconda3/envs/amrfinder-bioconda/bin/
+Software version: 4.2.7
+Database directory: /home/cagns/miniconda3/envs/amrfinder-bioconda/share/amrfinderplus/data/2026-03-24.1
+Database version: 2026-03-24.1
+AMRFinder translated nucleotide and mutation search
+Running tblastn
+Running blastn
+Making report
+amrfinder took 95 seconds to complete"
+SAMN07291512,GCF_002968715.1,data\external\ncbi_fastas_cipro_pilot25\SAMN07291512__GCF_002968715.1.fna,data\external\amrfinder_batch_cipro_pilot25\hits\SAMN07291512.tsv,data\external\amrfinder_batch_cipro_pilot25\mutation_all\SAMN07291512.tsv,data\external\amrfinder_batch_cipro_pilot25\logs\SAMN07291512.log,completed,0,,"Running: amrfinder --nucleotide /mnt/c/Users/cagns/Downloads/capstone_project/data/external/ncbi_fastas_cipro_pilot25/SAMN07291512__GCF_002968715.1.fna --organism Escherichia --name SAMN07291512 --output /mnt/c/Users/cagns/Downloads/capstone_project/data/external/amrfinder_batch_cipro_pilot25/hits/SAMN07291512.tsv --log /mnt/c/Users/cagns/Downloads/capstone_project/data/external/amrfinder_batch_cipro_pilot25/logs/SAMN07291512.log --mutation_all /mnt/c/Users/cagns/Downloads/capstone_project/data/external/amrfinder_batch_cipro_pilot25/mutation_all/SAMN07291512.tsv
+Software directory: /home/cagns/miniconda3/envs/amrfinder-bioconda/bin/
+Software version: 4.2.7
+Database directory: /home/cagns/miniconda3/envs/amrfinder-bioconda/share/amrfinderplus/data/2026-03-24.1
+Database version: 2026-03-24.1
+AMRFinder translated nucleotide and mutation search
+Running tblastn
+Running blastn
+Making report
+amrfinder took 93 seconds to complete"
+SAMN04014854,GCF_003571685.1,data\external\ncbi_fastas_cipro_pilot25\SAMN04014854__GCF_003571685.1.fna,data\external\amrfinder_batch_cipro_pilot25\hits\SAMN04014854.tsv,data\external\amrfinder_batch_cipro_pilot25\mutation_all\SAMN04014854.tsv,data\external\amrfinder_batch_cipro_pilot25\logs\SAMN04014854.log,completed,0,,"Running: amrfinder --nucleotide /mnt/c/Users/cagns/Downloads/capstone_project/data/external/ncbi_fastas_cipro_pilot25/SAMN04014854__GCF_003571685.1.fna --organism Escherichia --name SAMN04014854 --output /mnt/c/Users/cagns/Downloads/capstone_project/data/external/amrfinder_batch_cipro_pilot25/hits/SAMN04014854.tsv --log /mnt/c/Users/cagns/Downloads/capstone_project/data/external/amrfinder_batch_cipro_pilot25/logs/SAMN04014854.log --mutation_all /mnt/c/Users/cagns/Downloads/capstone_project/data/external/amrfinder_batch_cipro_pilot25/mutation_all/SAMN04014854.tsv
+Software directory: /home/cagns/miniconda3/envs/amrfinder-bioconda/bin/
+Software version: 4.2.7
+Database directory: /home/cagns/miniconda3/envs/amrfinder-bioconda/share/amrfinderplus/data/2026-03-24.1
+Database version: 2026-03-24.1
+AMRFinder translated nucleotide and mutation search
+Running tblastn
+Running blastn
+Making report
+amrfinder took 149 seconds to complete"
+SAMN04014930,GCF_003571825.1,data\external\ncbi_fastas_cipro_pilot25\SAMN04014930__GCF_003571825.1.fna,data\external\amrfinder_batch_cipro_pilot25\hits\SAMN04014930.tsv,data\external\amrfinder_batch_cipro_pilot25\mutation_all\SAMN04014930.tsv,data\external\amrfinder_batch_cipro_pilot25\logs\SAMN04014930.log,completed,0,,"Running: amrfinder --nucleotide /mnt/c/Users/cagns/Downloads/capstone_project/data/external/ncbi_fastas_cipro_pilot25/SAMN04014930__GCF_003571825.1.fna --organism Escherichia --name SAMN04014930 --output /mnt/c/Users/cagns/Downloads/capstone_project/data/external/amrfinder_batch_cipro_pilot25/hits/SAMN04014930.tsv --log /mnt/c/Users/cagns/Downloads/capstone_project/data/external/amrfinder_batch_cipro_pilot25/logs/SAMN04014930.log --mutation_all /mnt/c/Users/cagns/Downloads/capstone_project/data/external/amrfinder_batch_cipro_pilot25/mutation_all/SAMN04014930.tsv
+Software directory: /home/cagns/miniconda3/envs/amrfinder-bioconda/bin/
+Software version: 4.2.7
+Database directory: /home/cagns/miniconda3/envs/amrfinder-bioconda/share/amrfinderplus/data/2026-03-24.1
+Database version: 2026-03-24.1
+AMRFinder translated nucleotide and mutation search
+Running tblastn
+Running blastn
+Making report
+amrfinder took 133 seconds to complete"
+SAMN12648980,GCF_008727135.1,data\external\ncbi_fastas_cipro_pilot25\SAMN12648980__GCF_008727135.1.fna,data\external\amrfinder_batch_cipro_pilot25\hits\SAMN12648980.tsv,data\external\amrfinder_batch_cipro_pilot25\mutation_all\SAMN12648980.tsv,data\external\amrfinder_batch_cipro_pilot25\logs\SAMN12648980.log,completed,0,,"Running: amrfinder --nucleotide /mnt/c/Users/cagns/Downloads/capstone_project/data/external/ncbi_fastas_cipro_pilot25/SAMN12648980__GCF_008727135.1.fna --organism Escherichia --name SAMN12648980 --output /mnt/c/Users/cagns/Downloads/capstone_project/data/external/amrfinder_batch_cipro_pilot25/hits/SAMN12648980.tsv --log /mnt/c/Users/cagns/Downloads/capstone_project/data/external/amrfinder_batch_cipro_pilot25/logs/SAMN12648980.log --mutation_all /mnt/c/Users/cagns/Downloads/capstone_project/data/external/amrfinder_batch_cipro_pilot25/mutation_all/SAMN12648980.tsv
+Software directory: /home/cagns/miniconda3/envs/amrfinder-bioconda/bin/
+Software version: 4.2.7
+Database directory: /home/cagns/miniconda3/envs/amrfinder-bioconda/share/amrfinderplus/data/2026-03-24.1
+Database version: 2026-03-24.1
+AMRFinder translated nucleotide and mutation search
+Running tblastn
+Running blastn
+Making report
+amrfinder took 141 seconds to complete"
+SAMN12648979,GCF_008727155.1,data\external\ncbi_fastas_cipro_pilot25\SAMN12648979__GCF_008727155.1.fna,data\external\amrfinder_batch_cipro_pilot25\hits\SAMN12648979.tsv,data\external\amrfinder_batch_cipro_pilot25\mutation_all\SAMN12648979.tsv,data\external\amrfinder_batch_cipro_pilot25\logs\SAMN12648979.log,completed,0,,"Running: amrfinder --nucleotide /mnt/c/Users/cagns/Downloads/capstone_project/data/external/ncbi_fastas_cipro_pilot25/SAMN12648979__GCF_008727155.1.fna --organism Escherichia --name SAMN12648979 --output /mnt/c/Users/cagns/Downloads/capstone_project/data/external/amrfinder_batch_cipro_pilot25/hits/SAMN12648979.tsv --log /mnt/c/Users/cagns/Downloads/capstone_project/data/external/amrfinder_batch_cipro_pilot25/logs/SAMN12648979.log --mutation_all /mnt/c/Users/cagns/Downloads/capstone_project/data/external/amrfinder_batch_cipro_pilot25/mutation_all/SAMN12648979.tsv
+Software directory: /home/cagns/miniconda3/envs/amrfinder-bioconda/bin/
+Software version: 4.2.7
+Database directory: /home/cagns/miniconda3/envs/amrfinder-bioconda/share/amrfinderplus/data/2026-03-24.1
+Database version: 2026-03-24.1
+AMRFinder translated nucleotide and mutation search
+Running tblastn
+Running blastn
+Making report
+amrfinder took 148 seconds to complete"
+SAMN12648978,GCF_008727175.1,data\external\ncbi_fastas_cipro_pilot25\SAMN12648978__GCF_008727175.1.fna,data\external\amrfinder_batch_cipro_pilot25\hits\SAMN12648978.tsv,data\external\amrfinder_batch_cipro_pilot25\mutation_all\SAMN12648978.tsv,data\external\amrfinder_batch_cipro_pilot25\logs\SAMN12648978.log,completed,0,,"Running: amrfinder --nucleotide /mnt/c/Users/cagns/Downloads/capstone_project/data/external/ncbi_fastas_cipro_pilot25/SAMN12648978__GCF_008727175.1.fna --organism Escherichia --name SAMN12648978 --output /mnt/c/Users/cagns/Downloads/capstone_project/data/external/amrfinder_batch_cipro_pilot25/hits/SAMN12648978.tsv --log /mnt/c/Users/cagns/Downloads/capstone_project/data/external/amrfinder_batch_cipro_pilot25/logs/SAMN12648978.log --mutation_all /mnt/c/Users/cagns/Downloads/capstone_project/data/external/amrfinder_batch_cipro_pilot25/mutation_all/SAMN12648978.tsv
+Software directory: /home/cagns/miniconda3/envs/amrfinder-bioconda/bin/
+Software version: 4.2.7
+Database directory: /home/cagns/miniconda3/envs/amrfinder-bioconda/share/amrfinderplus/data/2026-03-24.1
+Database version: 2026-03-24.1
+AMRFinder translated nucleotide and mutation search
+Running tblastn
+Running blastn
+Making report
+amrfinder took 151 seconds to complete"

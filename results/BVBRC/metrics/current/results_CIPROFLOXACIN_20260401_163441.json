@@ -1,0 +1,102 @@
+{
+    "logistic_regression": {
+        "metrics": {
+            "accuracy": 0.7821011673151751,
+            "precision": 0.7608695652173914,
+            "recall": 0.4375,
+            "f1_score": 0.5555555555555556,
+            "roc_auc": 0.74159604519774,
+            "model": "logistic_regression"
+        },
+        "confusion_matrix": [
+            [
+                166,
+                11
+            ],
+            [
+                45,
+                35
+            ]
+        ]
+    },
+    "random_forest": {
+        "metrics": {
+            "accuracy": 0.77431906614786,
+            "precision": 0.75,
+            "recall": 0.4125,
+            "f1_score": 0.532258064516129,
+            "roc_auc": 0.7228460451977401,
+            "model": "random_forest"
+        },
+        "confusion_matrix": [
+            [
+                166,
+                11
+            ],
+            [
+                47,
+                33
+            ]
+        ]
+    },
+    "xgboost": {
+        "metrics": {
+            "accuracy": 0.7821011673151751,
+            "precision": 0.7857142857142857,
+            "recall": 0.4125,
+            "f1_score": 0.5409836065573771,
+            "roc_auc": 0.730614406779661,
+            "model": "xgboost"
+        },
+        "confusion_matrix": [
+            [
+                168,
+                9
+            ],
+            [
+                47,
+                33
+            ]
+        ]
+    },
+    "stacking_ensemble": {
+        "metrics": {
+            "accuracy": 0.7665369649805448,
+            "precision": 0.7631578947368421,
+            "recall": 0.3625,
+            "f1_score": 0.4915254237288136,
+            "roc_auc": 0.7251412429378529,
+            "model": "stacking_ensemble"
+        },
+        "confusion_matrix": [
+            [
+                168,
+                9
+            ],
+            [
+                51,
+                29
+            ]
+        ]
+    },
+    "voting_ensemble": {
+        "metrics": {
+            "accuracy": 0.7782101167315175,
+            "precision": 0.7674418604651163,
+            "recall": 0.4125,
+            "f1_score": 0.5365853658536586,
+            "roc_auc": 0.7173022598870056,
+            "model": "voting_ensemble"
+        },
+        "confusion_matrix": [
+            [
+                167,
+                10
+            ],
+            [
+                47,
+                33
+            ]
+        ]
+    }
+}

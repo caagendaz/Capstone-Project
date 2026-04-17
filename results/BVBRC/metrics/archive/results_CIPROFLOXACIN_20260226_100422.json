@@ -1,0 +1,102 @@
+{
+    "logistic_regression": {
+        "metrics": {
+            "accuracy": 0.7628205128205128,
+            "precision": 0.6818181818181818,
+            "recall": 0.3333333333333333,
+            "f1_score": 0.44776119402985076,
+            "roc_auc": 0.6571571571571571,
+            "model": "logistic_regression"
+        },
+        "confusion_matrix": [
+            [
+                104,
+                7
+            ],
+            [
+                30,
+                15
+            ]
+        ]
+    },
+    "random_forest": {
+        "metrics": {
+            "accuracy": 0.7628205128205128,
+            "precision": 0.6818181818181818,
+            "recall": 0.3333333333333333,
+            "f1_score": 0.44776119402985076,
+            "roc_auc": 0.6675675675675676,
+            "model": "random_forest"
+        },
+        "confusion_matrix": [
+            [
+                104,
+                7
+            ],
+            [
+                30,
+                15
+            ]
+        ]
+    },
+    "xgboost": {
+        "metrics": {
+            "accuracy": 0.7692307692307693,
+            "precision": 0.7142857142857143,
+            "recall": 0.3333333333333333,
+            "f1_score": 0.45454545454545453,
+            "roc_auc": 0.6723723723723722,
+            "model": "xgboost"
+        },
+        "confusion_matrix": [
+            [
+                105,
+                6
+            ],
+            [
+                30,
+                15
+            ]
+        ]
+    },
+    "stacking_ensemble": {
+        "metrics": {
+            "accuracy": 0.7628205128205128,
+            "precision": 0.6818181818181818,
+            "recall": 0.3333333333333333,
+            "f1_score": 0.44776119402985076,
+            "roc_auc": 0.6582582582582581,
+            "model": "stacking_ensemble"
+        },
+        "confusion_matrix": [
+            [
+                104,
+                7
+            ],
+            [
+                30,
+                15
+            ]
+        ]
+    },
+    "voting_ensemble": {
+        "metrics": {
+            "accuracy": 0.7628205128205128,
+            "precision": 0.6818181818181818,
+            "recall": 0.3333333333333333,
+            "f1_score": 0.44776119402985076,
+            "roc_auc": 0.6584584584584584,
+            "model": "voting_ensemble"
+        },
+        "confusion_matrix": [
+            [
+                104,
+                7
+            ],
+            [
+                30,
+                15
+            ]
+        ]
+    }
+}

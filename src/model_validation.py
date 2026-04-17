@@ -29,15 +29,24 @@ import joblib
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+PALETTE = {
+    'blue': '#2A6F97',
+    'orange': '#F4A261',
+    'purple': '#7B6DCC',
+    'slate': '#5C677D'
+}
+
 
 class ModelValidator:
     """
     Validates model performance through statistical testing.
     """
     
-    def __init__(self, results_dir: str = "results"):
+    def __init__(self, results_dir: str = "results", figures_dir: Optional[str] = None):
         self.results_dir = Path(results_dir)
+        self.figures_dir = Path(figures_dir) if figures_dir else self.results_dir
         self.results_dir.mkdir(parents=True, exist_ok=True)
+        self.figures_dir.mkdir(parents=True, exist_ok=True)
         
     def permutation_test(self,
                         model: Any,
@@ -134,15 +143,15 @@ class ModelValidator:
         plt.figure(figsize=(10, 6))
         
         # Histogram of permuted scores
-        plt.hist(permuted_scores, bins=50, alpha=0.7, color='skyblue', 
+        plt.hist(permuted_scores, bins=50, alpha=0.7, color=PALETTE['blue'],
                 edgecolor='black', label='Permuted distribution')
         
         # Actual score
-        plt.axvline(actual_score, color='red', linestyle='--', linewidth=2,
+        plt.axvline(actual_score, color=PALETTE['orange'], linestyle='--', linewidth=2,
                    label=f'Actual score = {actual_score:.4f}')
         
         # Mean of permuted scores
-        plt.axvline(permuted_scores.mean(), color='blue', linestyle='--', linewidth=2,
+        plt.axvline(permuted_scores.mean(), color=PALETTE['purple'], linestyle='--', linewidth=2,
                    label=f'Permuted mean = {permuted_scores.mean():.4f}')
         
         plt.xlabel(metric.replace('_', ' ').title())
@@ -151,7 +160,7 @@ class ModelValidator:
         plt.legend()
         plt.grid(alpha=0.3)
         
-        output_path = self.results_dir / f"permutation_test_{model_name}.png"
+        output_path = self.figures_dir / f"permutation_test_{model_name}.png"
         plt.savefig(output_path, dpi=300, bbox_inches='tight')
         logger.info(f"Saved permutation test plot to {output_path}")
         plt.close()
@@ -255,17 +264,17 @@ class ModelValidator:
             scores_array = np.array(scores)
             
             # Histogram
-            ax.hist(scores_array, bins=30, alpha=0.7, color='skyblue', 
+            ax.hist(scores_array, bins=30, alpha=0.7, color=PALETTE['blue'],
                    edgecolor='black')
             
             # Mean and confidence interval
             mean = scores_array.mean()
             ci_lower, ci_upper = np.percentile(scores_array, [2.5, 97.5])
             
-            ax.axvline(mean, color='red', linestyle='--', linewidth=2,
+            ax.axvline(mean, color=PALETTE['orange'], linestyle='--', linewidth=2,
                       label=f'Mean = {mean:.4f}')
-            ax.axvline(ci_lower, color='green', linestyle=':', linewidth=1.5)
-            ax.axvline(ci_upper, color='green', linestyle=':', linewidth=1.5,
+            ax.axvline(ci_lower, color=PALETTE['purple'], linestyle=':', linewidth=1.5)
+            ax.axvline(ci_upper, color=PALETTE['purple'], linestyle=':', linewidth=1.5,
                       label=f'95% CI [{ci_lower:.4f}, {ci_upper:.4f}]')
             
             ax.set_xlabel(metric.replace('_', ' ').title())
@@ -278,7 +287,7 @@ class ModelValidator:
                     fontsize=14, fontweight='bold')
         plt.tight_layout()
         
-        output_path = self.results_dir / f"monte_carlo_{model_name}.png"
+        output_path = self.figures_dir / f"monte_carlo_{model_name}.png"
         plt.savefig(output_path, dpi=300, bbox_inches='tight')
         logger.info(f"Saved Monte Carlo plot to {output_path}")
         plt.close()
@@ -420,7 +429,7 @@ class ModelValidator:
         ax.errorbar(x_pos, means, 
                    yerr=[errors_lower, errors_upper],
                    fmt='o', markersize=10, capsize=5, capthick=2,
-                   color='steelblue', ecolor='darkblue')
+                   color=PALETTE['blue'], ecolor=PALETTE['slate'])
         
         ax.set_xticks(x_pos)
         ax.set_xticklabels([m.replace('_', ' ').title() for m in metrics])
@@ -431,7 +440,7 @@ class ModelValidator:
         ax.set_ylim([0, 1.05])
         
         plt.tight_layout()
-        output_path = self.results_dir / f"confidence_intervals_{model_name}.png"
+        output_path = self.figures_dir / f"confidence_intervals_{model_name}.png"
         plt.savefig(output_path, dpi=300, bbox_inches='tight')
         logger.info(f"Saved confidence intervals plot to {output_path}")
         plt.close()
@@ -454,27 +463,26 @@ class ModelValidator:
         logger.info(f"{'='*60}\n")
         
         results = {}
-        
-        # 1. Permutation test
+
+        # 1. Permutation test on the untouched hold-out test set
+        permutation_metric = 'roc_auc' if hasattr(model, 'predict_proba') else 'accuracy'
         perm_results, perm_scores = self.permutation_test(
             model, X_test, y_test,
             n_permutations=n_permutations,
-            metric='accuracy'
+            metric=permutation_metric
         )
         results['permutation_test'] = perm_results
         self.plot_permutation_test(
             perm_results['actual_score'],
             perm_scores,
-            'accuracy',
+            permutation_metric,
             model_name
         )
-        
-        # 2. Monte Carlo simulation
-        X_all = np.vstack([X_train, X_test])
-        y_all = np.concatenate([y_train, y_test])
-        
+
+        # 2. Monte Carlo simulation on the training split only so the final
+        # test set remains a pure hold-out set.
         mc_results = self.monte_carlo_simulation(
-            model, X_all, y_all,
+            model, X_train, y_train,
             n_iterations=n_mc_iterations,
             test_size=0.2
         )

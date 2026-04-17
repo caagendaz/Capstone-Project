@@ -21,7 +21,7 @@ from datetime import datetime
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier, StackingClassifier, VotingClassifier
 from sklearn.model_selection import (
-    GridSearchCV, RandomizedSearchCV, cross_val_score,
+    GridSearchCV, RandomizedSearchCV, cross_val_score, cross_val_predict,
     StratifiedKFold
 )
 from sklearn.metrics import (
@@ -29,7 +29,9 @@ from sklearn.metrics import (
     roc_auc_score, confusion_matrix, classification_report,
     roc_curve, precision_recall_curve
 )
+from sklearn.pipeline import Pipeline as SkPipeline
 from sklearn.preprocessing import StandardScaler
+from sklearn.feature_selection import SelectKBest, mutual_info_classif
 from sklearn.feature_selection import RFE, SelectFromModel
 import xgboost as xgb
 
@@ -55,17 +57,83 @@ class ModelTrainer:
     Trains and evaluates machine learning models for antibiotic resistance prediction.
     """
     
-    def __init__(self, 
+    def __init__(self,
                  model_dir: str = "models",
-                 results_dir: str = "results"):
+                 results_dir: str = "results",
+                 figures_dir: Optional[str] = None,
+                 metrics_dir: Optional[str] = None,
+                 use_smote: bool = True,
+                 use_feature_selection: bool = True,
+                 n_features: int = 30,
+                 artifact_prefix: str = ""):
         self.model_dir = Path(model_dir)
         self.results_dir = Path(results_dir)
+        self.metrics_dir = Path(metrics_dir) if metrics_dir else self.results_dir / "metrics"
+        self.figures_dir = Path(figures_dir) if figures_dir else self.results_dir
         self.model_dir.mkdir(parents=True, exist_ok=True)
         self.results_dir.mkdir(parents=True, exist_ok=True)
+        self.metrics_dir.mkdir(parents=True, exist_ok=True)
+        self.figures_dir.mkdir(parents=True, exist_ok=True)
         
         self.scaler = StandardScaler()
         self.models = {}
         self.results = {}
+        # Restricted Windows sandboxes can block loky/joblib subprocesses.
+        # Use serial execution so training can still complete reliably.
+        self.parallel_jobs = 1
+        self.use_smote = use_smote and SMOTE_AVAILABLE
+        self.use_feature_selection = use_feature_selection
+        self.n_features = n_features
+        self.artifact_prefix = "".join(
+            char if char.isalnum() or char in ("_", "-") else "_"
+            for char in artifact_prefix
+        ).strip("_")
+
+    def _artifact_name(self, base_name: str) -> str:
+        """Attach a run-specific prefix to avoid overwriting artifacts."""
+        return f"{base_name}_{self.artifact_prefix}" if self.artifact_prefix else base_name
+
+    def _build_pipeline(self, model_name: str, model: Any, num_input_features: int):
+        """
+        Build a leakage-safe pipeline so scaling, SMOTE, and feature selection
+        occur inside each cross-validation fold.
+        """
+        steps = []
+
+        if model_name == 'logistic_regression':
+            steps.append(('scaler', StandardScaler()))
+        else:
+            steps.append(('scaler', 'passthrough'))
+
+        if self.use_smote:
+            steps.append(('smote', SMOTE(random_state=42)))
+
+        k_features = 'all'
+        if self.use_feature_selection and num_input_features > self.n_features:
+            k_features = min(self.n_features, num_input_features)
+        steps.append(('select', SelectKBest(mutual_info_classif, k=k_features)))
+        steps.append(('model', model))
+
+        pipeline_class = ImbPipeline if self.use_smote else SkPipeline
+        return pipeline_class(steps)
+
+    def _unwrap_estimator_and_features(self, model: Any, feature_names: List[str]) -> Tuple[Any, List[str]]:
+        """
+        Extract the fitted estimator and surviving feature names from a pipeline.
+        """
+        final_model = model
+        selected_features = list(feature_names)
+
+        if hasattr(model, 'named_steps'):
+            selector = model.named_steps.get('select')
+            if selector is not None and selector != 'passthrough' and hasattr(selector, 'get_support'):
+                support = selector.get_support()
+                if len(support) == len(feature_names):
+                    selected_features = [name for name, keep in zip(feature_names, support) if keep]
+
+            final_model = model.named_steps.get('model', model)
+
+        return final_model, selected_features
         
     def prepare_data(self, X_train: pd.DataFrame, X_test: pd.DataFrame,
                     scale: bool = True) -> Tuple[np.ndarray, np.ndarray]:
@@ -95,15 +163,19 @@ class ModelTrainer:
         
         # Define hyperparameter grid
         param_grid = {
-            'C': [0.001, 0.01, 0.1, 1, 10, 100],
-            'penalty': ['l1', 'l2'],
-            'solver': ['liblinear', 'saga'],
-            'max_iter': [1000],
-            'class_weight': ['balanced', None]
+            'model__C': [0.001, 0.01, 0.1, 1, 10, 100],
+            'model__penalty': ['l1', 'l2'],
+            'model__solver': ['liblinear', 'saga'],
+            'model__max_iter': [1000],
+            'model__class_weight': ['balanced', None]
         }
         
         # Base model
-        lr = LogisticRegression(random_state=42)
+        lr = self._build_pipeline(
+            'logistic_regression',
+            LogisticRegression(random_state=42),
+            num_input_features=X_train.shape[1]
+        )
         
         # Grid search with cross-validation
         grid_search = GridSearchCV(
@@ -111,8 +183,9 @@ class ModelTrainer:
             param_grid,
             cv=StratifiedKFold(n_splits=cv, shuffle=True, random_state=42),
             scoring='roc_auc',
-            n_jobs=-1,
-            verbose=1
+            n_jobs=self.parallel_jobs,
+            verbose=1,
+            error_score='raise'
         )
         
         grid_search.fit(X_train, y_train)
@@ -141,17 +214,21 @@ class ModelTrainer:
         
         # Define hyperparameter distribution for random search
         param_dist = {
-            'n_estimators': [100, 200, 300, 500],
-            'max_depth': [10, 20, 30, None],
-            'min_samples_split': [2, 5, 10],
-            'min_samples_leaf': [1, 2, 4],
-            'max_features': ['sqrt', 'log2', None],
-            'bootstrap': [True, False],
-            'class_weight': ['balanced', 'balanced_subsample', None]
+            'model__n_estimators': [100, 200, 300, 500],
+            'model__max_depth': [10, 20, 30, None],
+            'model__min_samples_split': [2, 5, 10],
+            'model__min_samples_leaf': [1, 2, 4],
+            'model__max_features': ['sqrt', 'log2', None],
+            'model__bootstrap': [True, False],
+            'model__class_weight': ['balanced', 'balanced_subsample', None]
         }
         
         # Base model
-        rf = RandomForestClassifier(random_state=42, n_jobs=-1)
+        rf = self._build_pipeline(
+            'random_forest',
+            RandomForestClassifier(random_state=42, n_jobs=self.parallel_jobs),
+            num_input_features=X_train.shape[1]
+        )
         
         # Randomized search with cross-validation
         random_search = RandomizedSearchCV(
@@ -160,9 +237,10 @@ class ModelTrainer:
             n_iter=n_iter,
             cv=StratifiedKFold(n_splits=cv, shuffle=True, random_state=42),
             scoring='roc_auc',
-            n_jobs=-1,
+            n_jobs=self.parallel_jobs,
             verbose=1,
-            random_state=42
+            random_state=42,
+            error_score='raise'
         )
         
         random_search.fit(X_train, y_train)
@@ -191,25 +269,30 @@ class ModelTrainer:
         
         # Calculate scale_pos_weight for imbalanced data
         scale_pos_weight = (y_train == 0).sum() / (y_train == 1).sum()
+        scale_pos_weight_values = [1] if self.use_smote else [1, scale_pos_weight]
         
         # Define hyperparameter distribution
         param_dist = {
-            'n_estimators': [100, 200, 300, 500],
-            'max_depth': [3, 5, 7, 9],
-            'learning_rate': [0.01, 0.05, 0.1, 0.2],
-            'subsample': [0.6, 0.8, 1.0],
-            'colsample_bytree': [0.6, 0.8, 1.0],
-            'min_child_weight': [1, 3, 5],
-            'gamma': [0, 0.1, 0.2],
-            'scale_pos_weight': [1, scale_pos_weight]
+            'model__n_estimators': [100, 200, 300, 500],
+            'model__max_depth': [3, 5, 7, 9],
+            'model__learning_rate': [0.01, 0.05, 0.1, 0.2],
+            'model__subsample': [0.6, 0.8, 1.0],
+            'model__colsample_bytree': [0.6, 0.8, 1.0],
+            'model__min_child_weight': [1, 3, 5],
+            'model__gamma': [0, 0.1, 0.2],
+            'model__scale_pos_weight': scale_pos_weight_values
         }
         
         # Base model
-        xgb_model = xgb.XGBClassifier(
-            random_state=42,
-            use_label_encoder=False,
-            eval_metric='logloss',
-            n_jobs=-1
+        xgb_model = self._build_pipeline(
+            'xgboost',
+            xgb.XGBClassifier(
+                random_state=42,
+                use_label_encoder=False,
+                eval_metric='logloss',
+                n_jobs=self.parallel_jobs
+            ),
+            num_input_features=X_train.shape[1]
         )
         
         # Randomized search with cross-validation
@@ -219,9 +302,10 @@ class ModelTrainer:
             n_iter=n_iter,
             cv=StratifiedKFold(n_splits=cv, shuffle=True, random_state=42),
             scoring='roc_auc',
-            n_jobs=-1,
+            n_jobs=self.parallel_jobs,
             verbose=1,
-            random_state=42
+            random_state=42,
+            error_score='raise'
         )
         
         random_search.fit(X_train, y_train)
@@ -294,7 +378,7 @@ class ModelTrainer:
         
         for metric in scoring:
             scores = cross_val_score(model, X, y, cv=cv_splitter, 
-                                    scoring=metric, n_jobs=-1)
+                                    scoring=metric, n_jobs=self.parallel_jobs)
             cv_results[metric] = scores
             logger.info(f"{metric}: {scores.mean():.4f} (+/- {scores.std() * 2:.4f})")
         
@@ -313,7 +397,7 @@ class ModelTrainer:
         plt.ylabel('True Label')
         plt.title(f'Confusion Matrix - {model_name}')
         
-        output_path = self.results_dir / f"confusion_matrix_{model_name}.png"
+        output_path = self.figures_dir / f"{self._artifact_name(f'confusion_matrix_{model_name}')}.png"
         plt.savefig(output_path, dpi=300, bbox_inches='tight')
         logger.info(f"Saved confusion matrix to {output_path}")
         plt.close()
@@ -341,7 +425,7 @@ class ModelTrainer:
         plt.legend(loc='lower right')
         plt.grid(alpha=0.3)
         
-        output_path = self.results_dir / "roc_curves_comparison.png"
+        output_path = self.figures_dir / f"{self._artifact_name('roc_curves_comparison')}.png"
         plt.savefig(output_path, dpi=300, bbox_inches='tight')
         logger.info(f"Saved ROC curves to {output_path}")
         plt.close()
@@ -351,21 +435,23 @@ class ModelTrainer:
         """
         Plot feature importance for tree-based models.
         """
-        if not hasattr(model, 'feature_importances_'):
+        fitted_model, selected_features = self._unwrap_estimator_and_features(model, feature_names)
+
+        if not hasattr(fitted_model, 'feature_importances_'):
             logger.warning(f"{model_name} does not have feature_importances_")
             return
         
-        importances = model.feature_importances_
+        importances = fitted_model.feature_importances_
         indices = np.argsort(importances)[-top_n:]
         
         plt.figure(figsize=(10, 8))
         plt.barh(range(len(indices)), importances[indices])
-        plt.yticks(range(len(indices)), [feature_names[i] for i in indices])
+        plt.yticks(range(len(indices)), [selected_features[i] for i in indices])
         plt.xlabel('Feature Importance')
         plt.title(f'Top {top_n} Feature Importances - {model_name}')
         plt.tight_layout()
         
-        output_path = self.results_dir / f"feature_importance_{model_name}.png"
+        output_path = self.figures_dir / f"{self._artifact_name(f'feature_importance_{model_name}')}.png"
         plt.savefig(output_path, dpi=300, bbox_inches='tight')
         logger.info(f"Saved feature importance to {output_path}")
         plt.close()
@@ -382,6 +468,8 @@ class ModelTrainer:
             comparison.append(metrics)
         
         df_comparison = pd.DataFrame(comparison)
+        if df_comparison.empty:
+            raise RuntimeError("No model results were generated, so comparison could not be created.")
         df_comparison = df_comparison.set_index('model')
         
         logger.info("\n" + "="*60)
@@ -390,7 +478,7 @@ class ModelTrainer:
         logger.info(f"\n{df_comparison.to_string()}")
         
         # Save to CSV
-        output_path = self.results_dir / "metrics" / "model_comparison.csv"
+        output_path = self.metrics_dir / f"{self._artifact_name('model_comparison')}.csv"
         df_comparison.to_csv(output_path)
         logger.info(f"\nSaved comparison to {output_path}")
         
@@ -401,16 +489,19 @@ class ModelTrainer:
         Save trained model to disk.
         """
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"{model_name}_{antibiotic}_{timestamp}.pkl"
+        safe_antibiotic = self._artifact_name(antibiotic)
+        filename = f"{model_name}_{safe_antibiotic}_{timestamp}.pkl"
         filepath = self.model_dir / filename
         
         joblib.dump(model, filepath)
         logger.info(f"Saved model to {filepath}")
         
-        # Also save scaler
-        scaler_path = self.model_dir / f"scaler_{antibiotic}_{timestamp}.pkl"
-        joblib.dump(self.scaler, scaler_path)
-        logger.info(f"Saved scaler to {scaler_path}")
+        if hasattr(self.scaler, 'mean_'):
+            scaler_path = self.model_dir / f"scaler_{safe_antibiotic}_{timestamp}.pkl"
+            joblib.dump(self.scaler, scaler_path)
+            logger.info(f"Saved scaler to {scaler_path}")
+        else:
+            logger.info("Scaler is embedded in the saved model pipeline")
         
         return filepath
     
@@ -419,8 +510,8 @@ class ModelTrainer:
         Save all results to JSON file.
         """
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"results_{antibiotic}_{timestamp}.json"
-        filepath = self.results_dir / "metrics" / filename
+        filename = f"{self._artifact_name('results')}_{timestamp}.json"
+        filepath = self.metrics_dir / filename
         
         # Convert numpy arrays to lists for JSON serialization
         results_serializable = {}
@@ -461,7 +552,11 @@ class ModelTrainer:
         logger.info(f"Selecting top {n_features} features using RFE...")
         
         # Use Random Forest as base estimator
-        base_estimator = RandomForestClassifier(n_estimators=100, random_state=42, n_jobs=-1)
+        base_estimator = RandomForestClassifier(
+            n_estimators=100,
+            random_state=42,
+            n_jobs=self.parallel_jobs
+        )
         
         n_features = min(n_features, X_train.shape[1])
         rfe = RFE(estimator=base_estimator, n_features_to_select=n_features, step=1)
@@ -473,15 +568,23 @@ class ModelTrainer:
         self.feature_selector = rfe
         return X_train[:, selected_indices], selected_indices
     
-    def find_optimal_threshold(self, model: Any, X_val: np.ndarray, 
-                               y_val: np.ndarray) -> float:
+    def find_optimal_threshold(self, model: Any, X_train: np.ndarray,
+                               y_train: np.ndarray, cv: int = 5) -> float:
         """
-        Find optimal classification threshold to maximize F1 score.
-        Especially important when recall is low.
+        Find an operating threshold using out-of-fold predictions on the
+        training data only, so the test set remains untouched.
         """
-        logger.info("Finding optimal classification threshold...")
-        
-        y_proba = model.predict_proba(X_val)[:, 1]
+        logger.info("Finding optimal classification threshold from training-only out-of-fold predictions...")
+
+        cv_splitter = StratifiedKFold(n_splits=cv, shuffle=True, random_state=42)
+        y_proba = cross_val_predict(
+            model,
+            X_train,
+            y_train,
+            cv=cv_splitter,
+            method='predict_proba',
+            n_jobs=self.parallel_jobs
+        )[:, 1]
         
         # Test different thresholds
         thresholds = np.arange(0.1, 0.9, 0.05)
@@ -490,10 +593,8 @@ class ModelTrainer:
         
         for threshold in thresholds:
             y_pred = (y_proba >= threshold).astype(int)
-            f1 = f1_score(y_val, y_pred, zero_division=0)
-            recall = recall_score(y_val, y_pred, zero_division=0)
+            f1 = f1_score(y_train, y_pred, zero_division=0)
             
-            # Prioritize recall while maintaining reasonable precision
             if f1 > best_f1:
                 best_f1 = f1
                 best_threshold = threshold
@@ -510,10 +611,32 @@ class ModelTrainer:
         
         # Base estimators
         estimators = [
-            ('lr', LogisticRegression(max_iter=1000, random_state=42, class_weight='balanced')),
-            ('rf', RandomForestClassifier(n_estimators=100, random_state=42, n_jobs=-1, class_weight='balanced')),
-            ('xgb', xgb.XGBClassifier(n_estimators=100, random_state=42, use_label_encoder=False, 
-                                      eval_metric='logloss', n_jobs=-1))
+            ('lr', self._build_pipeline(
+                'logistic_regression',
+                LogisticRegression(max_iter=1000, random_state=42, class_weight='balanced'),
+                num_input_features=X_train.shape[1]
+            )),
+            ('rf', self._build_pipeline(
+                'random_forest',
+                RandomForestClassifier(
+                    n_estimators=100,
+                    random_state=42,
+                    n_jobs=self.parallel_jobs,
+                    class_weight='balanced'
+                ),
+                num_input_features=X_train.shape[1]
+            )),
+            ('xgb', self._build_pipeline(
+                'xgboost',
+                xgb.XGBClassifier(
+                    n_estimators=100,
+                    random_state=42,
+                    use_label_encoder=False,
+                    eval_metric='logloss',
+                    n_jobs=self.parallel_jobs
+                ),
+                num_input_features=X_train.shape[1]
+            ))
         ]
         
         # Stacking with logistic regression as final estimator
@@ -521,7 +644,7 @@ class ModelTrainer:
             estimators=estimators,
             final_estimator=LogisticRegression(max_iter=1000, random_state=42),
             cv=cv,
-            n_jobs=-1,
+            n_jobs=self.parallel_jobs,
             passthrough=False
         )
         
@@ -538,16 +661,38 @@ class ModelTrainer:
         logger.info("Training voting ensemble...")
         
         estimators = [
-            ('lr', LogisticRegression(max_iter=1000, random_state=42, class_weight='balanced')),
-            ('rf', RandomForestClassifier(n_estimators=100, random_state=42, n_jobs=-1, class_weight='balanced')),
-            ('xgb', xgb.XGBClassifier(n_estimators=100, random_state=42, use_label_encoder=False,
-                                      eval_metric='logloss', n_jobs=-1))
+            ('lr', self._build_pipeline(
+                'logistic_regression',
+                LogisticRegression(max_iter=1000, random_state=42, class_weight='balanced'),
+                num_input_features=X_train.shape[1]
+            )),
+            ('rf', self._build_pipeline(
+                'random_forest',
+                RandomForestClassifier(
+                    n_estimators=100,
+                    random_state=42,
+                    n_jobs=self.parallel_jobs,
+                    class_weight='balanced'
+                ),
+                num_input_features=X_train.shape[1]
+            )),
+            ('xgb', self._build_pipeline(
+                'xgboost',
+                xgb.XGBClassifier(
+                    n_estimators=100,
+                    random_state=42,
+                    use_label_encoder=False,
+                    eval_metric='logloss',
+                    n_jobs=self.parallel_jobs
+                ),
+                num_input_features=X_train.shape[1]
+            ))
         ]
         
         voting_clf = VotingClassifier(
             estimators=estimators,
             voting='soft',
-            n_jobs=-1
+            n_jobs=self.parallel_jobs
         )
         
         voting_clf.fit(X_train, y_train)
@@ -563,6 +708,9 @@ def train_all_models(X_train: pd.DataFrame,
                     y_test: pd.Series,
                     antibiotic: str,
                     cv: int = 5,
+                    results_dir: str = "results",
+                    figures_dir: Optional[str] = None,
+                    metrics_dir: Optional[str] = None,
                     use_smote: bool = True,
                     use_feature_selection: bool = True,
                     n_features: int = 30,
@@ -580,7 +728,15 @@ def train_all_models(X_train: pd.DataFrame,
         n_features: Number of features to select if using feature selection
         use_ensemble: Train ensemble models (stacking + voting)
     """
-    trainer = ModelTrainer()
+    trainer = ModelTrainer(
+        results_dir=results_dir,
+        figures_dir=figures_dir,
+        metrics_dir=metrics_dir,
+        use_smote=use_smote,
+        use_feature_selection=use_feature_selection,
+        n_features=n_features,
+        artifact_prefix=antibiotic
+    )
     feature_names = X_train.columns.tolist()
     
     logger.info(f"\n{'='*60}")
@@ -591,29 +747,11 @@ def train_all_models(X_train: pd.DataFrame,
     logger.info(f"Number of features: {X_train.shape[1]}")
     logger.info(f"Class distribution (train): {y_train.value_counts().to_dict()}")
     
-    # Prepare data
-    X_train_scaled, X_test_scaled = trainer.prepare_data(X_train, X_test, scale=True)
+    X_train_array = X_train.values if hasattr(X_train, 'values') else X_train
+    X_test_array = X_test.values if hasattr(X_test, 'values') else X_test
     y_train_array = y_train.values if hasattr(y_train, 'values') else y_train
     y_test_array = y_test.values if hasattr(y_test, 'values') else y_test
-    
-    # Apply SMOTE for class balancing
-    if use_smote and SMOTE_AVAILABLE:
-        X_train_balanced, y_train_balanced = trainer.apply_smote(X_train_scaled, y_train_array)
-    else:
-        X_train_balanced, y_train_balanced = X_train_scaled, y_train_array
-    
-    # Apply feature selection
     selected_features = feature_names
-    if use_feature_selection and X_train_balanced.shape[1] > n_features:
-        X_train_selected, selected_indices = trainer.select_features_rfe(
-            X_train_balanced, y_train_balanced, n_features=n_features
-        )
-        X_test_selected = X_test_scaled[:, selected_indices]
-        selected_features = [feature_names[i] for i in selected_indices]
-        logger.info(f"Selected features: {selected_features[:10]}...")  # Show first 10
-    else:
-        X_train_selected = X_train_balanced
-        X_test_selected = X_test_scaled
     
     # Train base models
     models_to_train = {
@@ -627,17 +765,17 @@ def train_all_models(X_train: pd.DataFrame,
     for model_name, train_func in models_to_train.items():
         try:
             # Train
-            model = train_func(X_train_selected, y_train_balanced, cv=cv)
+            model = train_func(X_train_array, y_train_array, cv=cv)
             
-            # Find optimal threshold
-            opt_threshold = trainer.find_optimal_threshold(model, X_test_selected, y_test_array)
+            # Find optimal threshold from training-only out-of-fold predictions
+            opt_threshold = trainer.find_optimal_threshold(model, X_train_array, y_train_array, cv=cv)
             optimal_thresholds[model_name] = opt_threshold
             
             # Evaluate with default threshold
-            trainer.evaluate_model(model, X_test_selected, y_test, model_name)
+            trainer.evaluate_model(model, X_test_array, y_test, model_name)
             
             # Also evaluate with optimal threshold
-            y_proba = model.predict_proba(X_test_selected)[:, 1]
+            y_proba = model.predict_proba(X_test_array)[:, 1]
             y_pred_optimal = (y_proba >= opt_threshold).astype(int)
             
             logger.info(f"\n{model_name} with optimal threshold ({opt_threshold:.2f}):")
@@ -647,11 +785,14 @@ def train_all_models(X_train: pd.DataFrame,
             logger.info(f"  F1: {f1_score(y_test_array, y_pred_optimal, zero_division=0):.4f}")
             
             # Plot confusion matrix
-            y_pred = model.predict(X_test_selected)
+            y_pred = model.predict(X_test_array)
             trainer.plot_confusion_matrix(y_test, y_pred, model_name)
             
             # Save model
             trainer.save_model(model, model_name, antibiotic)
+
+            _, selected_features = trainer._unwrap_estimator_and_features(model, feature_names)
+            logger.info(f"Active features for {model_name}: {selected_features[:10]}...")
             
         except Exception as e:
             logger.error(f"Error training {model_name}: {e}")
@@ -666,16 +807,16 @@ def train_all_models(X_train: pd.DataFrame,
             logger.info("="*40 + "\n")
             
             # Stacking ensemble
-            stacking_model = trainer.train_stacking_ensemble(X_train_selected, y_train_balanced, cv=cv)
-            trainer.evaluate_model(stacking_model, X_test_selected, y_test, 'stacking_ensemble')
-            y_pred_stack = stacking_model.predict(X_test_selected)
+            stacking_model = trainer.train_stacking_ensemble(X_train_array, y_train_array, cv=cv)
+            trainer.evaluate_model(stacking_model, X_test_array, y_test, 'stacking_ensemble')
+            y_pred_stack = stacking_model.predict(X_test_array)
             trainer.plot_confusion_matrix(y_test, y_pred_stack, 'stacking_ensemble')
             trainer.save_model(stacking_model, 'stacking_ensemble', antibiotic)
             
             # Voting ensemble
-            voting_model = trainer.train_voting_ensemble(X_train_selected, y_train_balanced)
-            trainer.evaluate_model(voting_model, X_test_selected, y_test, 'voting_ensemble')
-            y_pred_vote = voting_model.predict(X_test_selected)
+            voting_model = trainer.train_voting_ensemble(X_train_array, y_train_array)
+            trainer.evaluate_model(voting_model, X_test_array, y_test, 'voting_ensemble')
+            y_pred_vote = voting_model.predict(X_test_array)
             trainer.plot_confusion_matrix(y_test, y_pred_vote, 'voting_ensemble')
             trainer.save_model(voting_model, 'voting_ensemble', antibiotic)
             
@@ -688,7 +829,7 @@ def train_all_models(X_train: pd.DataFrame,
     trainer.compare_models()
     
     # Plot ROC curves
-    trainer.plot_roc_curves(X_test_selected, y_test)
+    trainer.plot_roc_curves(X_test_array, y_test)
     
     # Plot feature importance for tree models (using selected features)
     if 'random_forest' in trainer.models:
