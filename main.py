@@ -329,7 +329,8 @@ def run_model_training(antibiotic: str = "CIPROFLOXACIN"):
 
 def prepare_training_data(antibiotic: str,
                           feature_source: str = "profiles",
-                          testing_standard: str = "EUCAST"):
+                          testing_standard: str = "EUCAST",
+                          split_group: str = "sample"):
     """
     Load and prepare training data for a selected feature source.
     """
@@ -389,8 +390,52 @@ def prepare_training_data(antibiotic: str,
         )
 
     if feature_source == "ncbi_genes":
-        labeled_matrix = preprocessor.load_resistance_data(
+        quinolone_matrix_path = Path(
+            "data/external/amrfinder_batch_cipro_remaining/amrfinder_quinolone_labeled_feature_matrix.csv"
+        )
+        completed_matrix_path = Path(
+            "data/external/amrfinder_batch_cipro_remaining/amrfinder_labeled_feature_matrix.csv"
+        )
+        pilot_matrix_path = Path(
             "data/external/amrfinder_batch_cipro_pilot25/amrfinder_labeled_feature_matrix.csv"
+        )
+
+        if quinolone_matrix_path.exists():
+            matrix_path = quinolone_matrix_path
+        elif completed_matrix_path.exists():
+            matrix_path = completed_matrix_path
+        else:
+            matrix_path = pilot_matrix_path
+        labeled_matrix = preprocessor.load_resistance_data(str(matrix_path))
+
+        if (
+            split_group == "bioproject_accession"
+            and (
+                "bioproject_accession" not in labeled_matrix.columns
+                or labeled_matrix["bioproject_accession"].isna().all()
+            )
+            and "biosample_accession" in labeled_matrix.columns
+        ):
+            bioproject_map_path = Path("data/external/biosample_to_assembly.csv")
+            if bioproject_map_path.exists():
+                bioproject_map = (
+                    pd.read_csv(
+                        bioproject_map_path,
+                        usecols=["biosample_accession", "bioproject_accession"],
+                        low_memory=False
+                    )
+                    .drop_duplicates(subset=["biosample_accession"])
+                )
+                labeled_matrix = labeled_matrix.merge(
+                    bioproject_map,
+                    on="biosample_accession",
+                    how="left"
+                )
+
+        label_col = (
+            "resistance_phenotype"
+            if "resistance_phenotype" in labeled_matrix.columns
+            else "ciprofloxacin_phenotype"
         )
         return preprocessor.prepare_modeling_data_from_feature_matrix(
             labeled_matrix,
@@ -398,9 +443,10 @@ def prepare_training_data(antibiotic: str,
             test_size=config.TEST_SIZE,
             random_state=config.RANDOM_STATE,
             feature_prefix="feat_",
-            label_col="resistance_phenotype",
+            label_col=label_col,
             positive_label="R",
-            sample_id_col="Name"
+            sample_id_col="Name",
+            split_group_col=split_group
         )
 
     raise ValueError(f"Unknown feature source: {feature_source}")
@@ -409,6 +455,7 @@ def prepare_training_data(antibiotic: str,
 def run_model_training_with_source(antibiotic: str = "CIPROFLOXACIN",
                                    feature_source: str = "profiles",
                                    testing_standard: str = "EUCAST",
+                                   split_group: str = "sample",
                                    cv: int = 5,
                                    use_ensemble: bool = True,
                                    metrics_dir: str | None = None,
@@ -423,6 +470,8 @@ def run_model_training_with_source(antibiotic: str = "CIPROFLOXACIN",
     logger.info(f"Feature source: {feature_source}")
     if feature_source.lower() == "genes":
         logger.info(f"Testing standard: {testing_standard}")
+    if feature_source.lower() == "ncbi_genes" and split_group != "sample":
+        logger.info(f"Strict split group: {split_group}")
 
     selected_results_source = (results_source or resolve_results_source(feature_source)).upper()
     results_layout = config.get_results_layout(selected_results_source)
@@ -431,7 +480,8 @@ def run_model_training_with_source(antibiotic: str = "CIPROFLOXACIN",
     X_train, X_test, y_train, y_test = prepare_training_data(
         antibiotic=antibiotic,
         feature_source=feature_source,
-        testing_standard=testing_standard
+        testing_standard=testing_standard,
+        split_group=split_group
     )
     
     if X_train is None or len(X_train) == 0:
@@ -439,10 +489,14 @@ def run_model_training_with_source(antibiotic: str = "CIPROFLOXACIN",
         return None, None, None, None, None
     
     # Train all models
+    split_suffix = ""
+    if feature_source.lower() == "ncbi_genes" and split_group != "sample":
+        split_suffix = f"_{split_group.upper()}"
+
     trainer = train_all_models(
         X_train, X_test, y_train, y_test,
         antibiotic=(
-            f"{antibiotic}_{feature_source.upper()}"
+            f"{antibiotic}_{feature_source.upper()}{split_suffix}"
             if feature_source.lower() in {"profiles", "ncbi_genes"}
             else f"{antibiotic}_{feature_source.upper()}_{testing_standard}"
         ),
@@ -533,6 +587,14 @@ def main():
         help="Results namespace to write into; defaults based on feature source"
     )
     parser.add_argument(
+        "--split-group",
+        default="sample",
+        help=(
+            "Grouping variable for stricter holdout splits. For ncbi_genes, "
+            "use 'sample' (default), 'bioproject_accession', or 'location_source'."
+        )
+    )
+    parser.add_argument(
         "--skip-existing",
         action="store_true",
         help="Skip steps if output already exists"
@@ -568,6 +630,8 @@ def main():
     logger.info(f"Feature source: {args.feature_source}")
     if args.feature_source == "genes":
         logger.info(f"Testing standard: {args.testing_standard}")
+    if args.feature_source == "ncbi_genes" and args.split_group != "sample":
+        logger.info(f"Strict split group: {args.split_group}")
     logger.info(f"Results source: {selected_results_source}")
     
     steps_to_run = args.steps
@@ -599,6 +663,7 @@ def main():
                 antibiotic=args.antibiotic,
                 feature_source=args.feature_source,
                 testing_standard=args.testing_standard,
+                split_group=args.split_group,
                 cv=config.CV_FOLDS,
                 use_ensemble=True,
                 results_source=selected_results_source

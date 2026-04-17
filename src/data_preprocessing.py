@@ -14,7 +14,7 @@ import numpy as np
 from pathlib import Path
 from typing import Tuple, List, Optional, Dict
 import logging
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, GroupShuffleSplit, StratifiedGroupKFold
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 
 logging.basicConfig(level=logging.INFO)
@@ -235,6 +235,79 @@ class EcoliDataPreprocessor:
         test_mask = group_series.isin(test_groups)
 
         return X.loc[train_mask], X.loc[test_mask], y.loc[train_mask], y.loc[test_mask]
+
+    def _split_by_holdout_groups(self,
+                                 X: pd.DataFrame,
+                                 y: pd.Series,
+                                 groups: pd.Series,
+                                 test_size: float,
+                                 random_state: int) -> Tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
+        """
+        Split data by a broader metadata group (for example BioProject) while
+        keeping all rows from the same group on one side of the split.
+
+        Unlike isolate-level grouping, these groups can legitimately contain
+        both resistant and susceptible isolates, so we use a grouped CV-style
+        splitter instead of collapsing to one label per group.
+        """
+        group_series = pd.Series(groups, index=X.index, name='group')
+        valid_mask = group_series.notna() & (group_series.astype(str).str.strip() != "")
+
+        if not valid_mask.all():
+            dropped = int((~valid_mask).sum())
+            logger.warning("Dropping %s rows with missing strict split group labels", dropped)
+            X = X.loc[valid_mask]
+            y = y.loc[valid_mask]
+            group_series = group_series.loc[valid_mask]
+
+        unique_groups = pd.Index(group_series.astype(str).unique())
+        if len(unique_groups) < 2:
+            raise ValueError("Strict grouped split requires at least two unique groups.")
+
+        target_test_size = max(1, int(round(len(X) * test_size)))
+        n_splits = int(round(1 / test_size)) if 0 < test_size < 1 else 5
+        n_splits = max(2, min(n_splits, len(unique_groups)))
+
+        try:
+            splitter = StratifiedGroupKFold(
+                n_splits=n_splits,
+                shuffle=True,
+                random_state=random_state
+            )
+
+            best_split = None
+            best_score = None
+            overall_rate = float(y.mean()) if len(y) else 0.0
+
+            for train_idx, test_idx in splitter.split(X, y, groups=group_series):
+                test_rate = float(y.iloc[test_idx].mean()) if len(test_idx) else 0.0
+                score = (
+                    abs(len(test_idx) - target_test_size),
+                    abs(test_rate - overall_rate)
+                )
+                if best_score is None or score < best_score:
+                    best_score = score
+                    best_split = (train_idx, test_idx)
+
+            if best_split is None:
+                raise ValueError("StratifiedGroupKFold did not yield a valid split.")
+
+            train_idx, test_idx = best_split
+        except Exception as exc:
+            logger.warning("Falling back to GroupShuffleSplit for strict grouped split: %s", exc)
+            splitter = GroupShuffleSplit(
+                n_splits=1,
+                test_size=test_size,
+                random_state=random_state
+            )
+            train_idx, test_idx = next(splitter.split(X, y, groups=group_series))
+
+        return (
+            X.iloc[train_idx],
+            X.iloc[test_idx],
+            y.iloc[train_idx],
+            y.iloc[test_idx]
+        )
     
     def clean_resistance_data(self, df: pd.DataFrame) -> pd.DataFrame:
         """
@@ -677,7 +750,8 @@ class EcoliDataPreprocessor:
                                                  label_col: str = "resistance_phenotype",
                                                  positive_label: str = "R",
                                                  antibiotic: Optional[str] = None,
-                                                 sample_id_col: str = "Name") -> Tuple:
+                                                 sample_id_col: str = "Name",
+                                                 split_group_col: Optional[str] = None) -> Tuple:
         """
         Prepare train/test data from a pre-built isolate-by-feature matrix.
 
@@ -706,9 +780,9 @@ class EcoliDataPreprocessor:
                 "Sample ID column '%s' was not found; falling back to row index for grouping",
                 sample_id_col
             )
-            groups = pd.Series(work.index.astype(str), index=work.index)
+            sample_groups = pd.Series(work.index.astype(str), index=work.index)
         else:
-            groups = work[sample_id_col].astype(str)
+            sample_groups = work[sample_id_col].astype(str)
 
         X = work[feature_cols].copy().fillna(0).astype(int)
         y = work['binary_resistant']
@@ -716,13 +790,46 @@ class EcoliDataPreprocessor:
         logger.info(f"Feature dimensions: {X.shape}")
         logger.info(f"Class distribution: {y.value_counts().to_dict()}")
 
-        X_train, X_test, y_train, y_test = self._split_by_groups(
-            X,
-            y,
-            groups,
-            test_size=test_size,
-            random_state=random_state
-        )
+        if split_group_col and split_group_col.lower() not in {"sample", sample_id_col.lower()}:
+            if split_group_col == "location_source":
+                if "location" not in work.columns or "isolation_source" not in work.columns:
+                    raise ValueError(
+                        "Strict split group 'location_source' requires both 'location' and "
+                        "'isolation_source' columns."
+                    )
+                group_values = (
+                    work["location"].fillna("MISSING").astype(str).str.strip()
+                    + " | " +
+                    work["isolation_source"].fillna("MISSING").astype(str).str.strip()
+                )
+            else:
+                if split_group_col not in work.columns:
+                    raise ValueError(
+                        f"Strict split group column '{split_group_col}' was not found "
+                        "in the feature matrix."
+                    )
+                group_values = work[split_group_col].fillna("MISSING").astype(str).str.strip()
+
+            logger.info(
+                "Using strict grouped split by '%s' across %s unique groups",
+                split_group_col,
+                group_values.nunique()
+            )
+            X_train, X_test, y_train, y_test = self._split_by_holdout_groups(
+                X,
+                y,
+                group_values,
+                test_size=test_size,
+                random_state=random_state
+            )
+        else:
+            X_train, X_test, y_train, y_test = self._split_by_groups(
+                X,
+                y,
+                sample_groups,
+                test_size=test_size,
+                random_state=random_state
+            )
 
         logger.info(f"Training set: {len(X_train)} samples")
         logger.info(f"Test set: {len(X_test)} samples")
